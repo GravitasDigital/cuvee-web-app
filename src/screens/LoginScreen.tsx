@@ -23,7 +23,6 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onBack }) => {
 
   // Profile login fields
   const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
 
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
@@ -71,33 +70,20 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onBack }) => {
     e.preventDefault()
     setError('')
 
-    if (!email || !password) {
-      setError('Please enter both email and password')
+    if (!email) {
+      setError('Please enter your email address')
       return
     }
 
-    // Mock validation - in production this would verify against WordPress/database
-    const validProfiles = [
-      { email: 'john@example.com', password: 'demo123' },
-      { email: 'demo@cuvee.com', password: 'password' },
-    ]
-
-    const profile = validProfiles.find(
-      p => p.email.toLowerCase() === email.toLowerCase() &&
-           p.password === password
-    )
-
-    if (profile) {
-      setIsLoading(true)
-      setTimeout(() => {
-        onLogin({
-          userType: 'profile',
-          email: profile.email
-        })
-      }, 500)
-    } else {
-      setError('Invalid email or password. Please try again.')
-    }
+    // Demo mode - accept any email for testing with real HubSpot data
+    // In production this would verify against WordPress/database
+    setIsLoading(true)
+    setTimeout(() => {
+      onLogin({
+        userType: 'profile',
+        email: email.toLowerCase()
+      })
+    }, 500)
   }
 
   return (
@@ -223,7 +209,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onBack }) => {
                   <button
                     type="submit"
                     disabled={isLoading}
-                    className="w-full bg-gradient-to-r from-[#D4AF37] to-[#C4A137] text-white py-3 rounded-lg font-light uppercase text-sm tracking-wide hover:shadow-xl transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full bg-[#1e3a5f] text-white py-3 rounded-lg font-light uppercase text-sm tracking-wide hover:shadow-xl hover:brightness-110 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isLoading ? 'Verifying...' : 'Access Reservation'}
                   </button>
@@ -253,17 +239,9 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onBack }) => {
                   </div>
 
                   <div className="mb-6">
-                    <label className="block text-xs font-light uppercase tracking-wide text-gray-600 mb-2">
-                      Password
-                    </label>
-                    <input
-                      type="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="••••••••"
-                      className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-[#D4AF37] focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/20 transition-all"
-                      disabled={isLoading}
-                    />
+                    <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-700">
+                      <strong>Demo Mode:</strong> Enter any email from HubSpot to see real Voyage Passport data. No password required.
+                    </div>
                   </div>
 
                   {error && (
@@ -275,7 +253,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onBack }) => {
                   <button
                     type="submit"
                     disabled={isLoading}
-                    className="w-full bg-gradient-to-r from-[#D4AF37] to-[#C4A137] text-white py-3 rounded-lg font-light uppercase text-sm tracking-wide hover:shadow-xl transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full bg-[#1e3a5f] text-white py-3 rounded-lg font-light uppercase text-sm tracking-wide hover:shadow-xl hover:brightness-110 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isLoading ? 'Signing in...' : 'Sign In'}
                   </button>

@@ -147,35 +147,39 @@ const ReservationDetailScreen: React.FC<ReservationDetailScreenProps> = ({ onBac
 
   return (
     <div className="min-h-screen bg-[rgb(243,244,246)]">
-      <div className="max-w-4xl mx-auto p-6 pb-24">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center">
-            <button
-              onClick={onBack}
-              className="mr-4 hover:opacity-70 transition-opacity"
-            >
-              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+      {/* Sticky Header */}
+      <div className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-200/50 shadow-sm">
+        <div className="max-w-4xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <button
+                onClick={onBack}
+                className="mr-4 hover:opacity-70 transition-opacity"
+              >
+                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
             <h1 className="text-3xl font-thin uppercase tracking-wide">Welcome</h1>
           </div>
 
-          {/* Weather Widget */}
-          <div className="bg-white/80 backdrop-blur-sm rounded-lg px-4 py-2 shadow-md border border-gray-200/50">
-            <div className="flex items-center gap-2">
-              <svg className="w-5 h-5 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M10 2a6 6 0 00-6 6c0 4.314 6 10 6 10s6-5.686 6-10a6 6 0 00-6-6z"/>
-              </svg>
-              <div>
-                <div className="text-xs font-light text-gray-600">Aspen, CO</div>
-                <div className="text-sm font-normal text-gray-800">72°F ☀️</div>
+            {/* Weather Widget */}
+            <div className="bg-white/80 backdrop-blur-sm rounded-lg px-4 py-2 shadow-md border border-gray-200/50">
+              <div className="flex items-center gap-2">
+                <svg className="w-5 h-5 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M10 2a6 6 0 00-6 6c0 4.314 6 10 6 10s6-5.686 6-10a6 6 0 00-6-6z"/>
+                </svg>
+                <div>
+                  <div className="text-xs font-light text-gray-600">Aspen, CO</div>
+                  <div className="text-sm font-normal text-gray-800">72°F ☀️</div>
+                </div>
               </div>
             </div>
           </div>
         </div>
+      </div>
 
+      <div className="max-w-4xl mx-auto p-6 pb-24">
         {/* Property Card */}
         <div className="bg-white rounded-lg shadow-sm overflow-hidden mb-6">
           <div
@@ -211,13 +215,13 @@ const ReservationDetailScreen: React.FC<ReservationDetailScreenProps> = ({ onBac
         <div className="grid grid-cols-2 gap-4 mb-6">
           <button
             onClick={() => onNavigate('itinerary')}
-            className="bg-[#D4AF37] text-white py-3 rounded text-center font-light uppercase text-sm tracking-wide hover:bg-[#C4A137] transition-colors"
+            className="bg-[#1e3a5f] text-white py-3 rounded text-center font-light uppercase text-sm tracking-wide hover:brightness-110 transition-all"
           >
             View Itinerary
           </button>
           <a
             href={`sms:${mockReservation.phone}`}
-            className="bg-[#D4AF37] text-white py-3 rounded text-center font-light uppercase text-sm tracking-wide hover:bg-[#C4A137] transition-colors"
+            className="bg-[#1e3a5f] text-white py-3 rounded text-center font-light uppercase text-sm tracking-wide hover:brightness-110 transition-all"
           >
             Contact Concierge
           </a>
@@ -342,7 +346,7 @@ const ReservationDetailScreen: React.FC<ReservationDetailScreenProps> = ({ onBac
           </p>
           <button
             onClick={() => onNavigate('experiences')}
-            className="bg-[#D4AF37] text-white px-6 py-3 rounded font-light uppercase text-sm tracking-wide hover:bg-[#C4A137] transition-colors"
+            className="bg-[#1e3a5f] text-white px-6 py-3 rounded font-light uppercase text-sm tracking-wide hover:brightness-110 transition-all"
           >
             Browse Experiences
           </button>

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import VoyagePassportCard from '../components/VoyagePassportCard'
 
 interface ReservationsListScreenProps {
   onBack: () => void
@@ -23,6 +24,7 @@ interface Reservation {
 
 const ReservationsListScreen: React.FC<ReservationsListScreenProps> = ({ onBack, onNavigate }) => {
   const [isLoaded, setIsLoaded] = useState(false)
+  const [isPastTripsExpanded, setIsPastTripsExpanded] = useState(false)
 
   // Trigger entrance animations
   useEffect(() => {
@@ -184,7 +186,7 @@ const ReservationsListScreen: React.FC<ReservationsListScreenProps> = ({ onBack,
 
         <button
           onClick={() => onNavigate('reservation', reservation.id)}
-          className="w-full bg-[#D4AF37] text-white py-2.5 rounded-lg font-light uppercase text-xs tracking-wide hover:bg-[#C4A137] transition-all hover:scale-[1.02] active:scale-[0.98] ripple"
+          className="w-full bg-[#1e3a5f] text-white py-2.5 rounded-lg font-light uppercase text-xs tracking-wide hover:brightness-110 transition-all hover:scale-[1.02] active:scale-[0.98] ripple"
         >
           {reservation.status === 'past' ? 'View Details' : 'View Reservation'}
         </button>
@@ -200,20 +202,25 @@ const ReservationsListScreen: React.FC<ReservationsListScreenProps> = ({ onBack,
         <div className="absolute bottom-0 right-0 w-96 h-96 bg-[#1F2937]/10 rounded-full blur-3xl animate-float-delayed"></div>
       </div>
 
+      {/* Sticky Header */}
+      <div className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-200/50 shadow-sm">
+        <div className="max-w-4xl mx-auto px-6 py-4">
+          <div className={`flex items-center transition-all duration-700 ${isLoaded ? 'translate-y-0 opacity-100' : '-translate-y-4 opacity-0'}`}>
+            <button
+              onClick={onBack}
+              className="mr-4 hover:opacity-70 transition-opacity"
+            >
+              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <h1 className="text-3xl font-thin uppercase tracking-wide">My Reservations</h1>
+          </div>
+        </div>
+      </div>
+
       {/* Content */}
       <div className="relative z-10 max-w-4xl mx-auto p-6 pb-24">
-        {/* Header */}
-        <div className={`flex items-center mb-6 transition-all duration-700 ${isLoaded ? 'translate-y-0 opacity-100' : '-translate-y-4 opacity-0'}`}>
-          <button
-            onClick={onBack}
-            className="mr-4 hover:opacity-70 transition-opacity"
-          >
-            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
-          <h1 className="text-3xl font-thin uppercase tracking-wide">My Reservations</h1>
-        </div>
 
         {/* Current Stay Section */}
         {currentReservations.length > 0 && (
@@ -232,10 +239,15 @@ const ReservationsListScreen: React.FC<ReservationsListScreenProps> = ({ onBack,
           </div>
         )}
 
+        {/* Voyage Passport Section */}
+        <div className={`mb-8 transition-all duration-700 delay-200 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'}`}>
+          <VoyagePassportCard showFullDetailsLink={true} />
+        </div>
+
         {/* Upcoming Section */}
         {upcomingReservations.length > 0 && (
           <div className="mb-8">
-            <h2 className={`text-sm font-light uppercase tracking-wide text-gray-600 mb-4 flex items-center gap-2 transition-all duration-700 delay-200 ${isLoaded ? 'translate-x-0 opacity-100' : '-translate-x-4 opacity-0'}`}>
+            <h2 className={`text-sm font-light uppercase tracking-wide text-gray-600 mb-4 flex items-center gap-2 transition-all duration-700 delay-300 ${isLoaded ? 'translate-x-0 opacity-100' : '-translate-x-4 opacity-0'}`}>
               <svg className="w-5 h-5 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd"/>
               </svg>
@@ -243,26 +255,39 @@ const ReservationsListScreen: React.FC<ReservationsListScreenProps> = ({ onBack,
             </h2>
             <div className="space-y-4">
               {upcomingReservations.map((reservation, index) =>
-                renderReservationCard(reservation, index, 300 + (index * 100))
+                renderReservationCard(reservation, index, 400 + (index * 100))
               )}
             </div>
           </div>
         )}
 
-        {/* Past Section */}
+        {/* Past Section - Collapsible */}
         {pastReservations.length > 0 && (
-          <div>
-            <h2 className={`text-sm font-light uppercase tracking-wide text-gray-600 mb-4 flex items-center gap-2 transition-all duration-700 delay-300 ${isLoaded ? 'translate-x-0 opacity-100' : '-translate-x-4 opacity-0'}`}>
+          <div className="mb-8">
+            <button
+              onClick={() => setIsPastTripsExpanded(!isPastTripsExpanded)}
+              className={`w-full text-left text-sm font-light uppercase tracking-wide text-gray-600 mb-4 flex items-center gap-2 transition-all duration-700 delay-400 hover:text-gray-800 ${isLoaded ? 'translate-x-0 opacity-100' : '-translate-x-4 opacity-0'}`}
+            >
+              <svg
+                className={`w-5 h-5 text-gray-400 transition-transform duration-300 ${isPastTripsExpanded ? 'rotate-90' : ''}`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
               <svg className="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd"/>
               </svg>
-              Past Trips
-            </h2>
-            <div className="space-y-4">
-              {pastReservations.map((reservation, index) =>
-                renderReservationCard(reservation, index, 400 + (index * 100))
-              )}
-            </div>
+              Past Trips ({pastReservations.length})
+            </button>
+            {isPastTripsExpanded && (
+              <div className="space-y-4">
+                {pastReservations.map((reservation, index) =>
+                  renderReservationCard(reservation, index, 500 + (index * 100))
+                )}
+              </div>
+            )}
           </div>
         )}
 

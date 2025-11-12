@@ -5,7 +5,6 @@ interface Experience {
   name: string
   description: string
   category?: string
-  added?: boolean
 }
 
 interface ExperiencesScreenProps {
@@ -66,12 +65,15 @@ const ExperiencesScreen: React.FC<ExperiencesScreenProps> = ({ onBack }) => {
     }, 300)
   }, [])
 
-  const handleAddExperience = (id: number) => {
-    setExperiences(
-      experiences.map(exp =>
-        exp.id === id ? { ...exp, added: true } : exp
-      )
-    )
+  const handleAddExperience = (experienceName: string) => {
+    // In production, this phone number would come from HubSpot contact data
+    const conciergePhone = '1234567890' // Placeholder - should come from HubSpot
+
+    // Prepopulate SMS message
+    const message = encodeURIComponent(`I'd like to request: ${experienceName}`)
+
+    // Open SMS with prepopulated message
+    window.location.href = `sms:${conciergePhone}?body=${message}`
   }
 
   const filteredExperiences = filter === 'all'
@@ -80,17 +82,22 @@ const ExperiencesScreen: React.FC<ExperiencesScreenProps> = ({ onBack }) => {
 
   return (
     <div className="min-h-screen bg-[rgb(243,244,246)]">
-      <div className="max-w-7xl mx-auto p-6 pb-24">
-        <button
-          onClick={onBack}
-          className="mb-8 flex items-center gap-2 hover:opacity-70 transition-opacity"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-          <span className="uppercase text-sm tracking-wide font-light">Return</span>
-        </button>
+      {/* Sticky Header */}
+      <div className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-200/50 shadow-sm">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <button
+            onClick={onBack}
+            className="flex items-center gap-2 hover:opacity-70 transition-opacity"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            <span className="uppercase text-sm tracking-wide font-light">Return</span>
+          </button>
+        </div>
+      </div>
 
+      <div className="max-w-7xl mx-auto p-6 pb-24">
         <h1 className="text-3xl font-thin uppercase tracking-wide mb-8">Available Experiences</h1>
 
         {/* Filter Pills */}
@@ -101,7 +108,7 @@ const ExperiencesScreen: React.FC<ExperiencesScreenProps> = ({ onBack }) => {
               onClick={() => setFilter(category)}
               className={`px-4 py-2 rounded-full font-light text-sm uppercase tracking-wide whitespace-nowrap transition-all ${
                 filter === category
-                  ? 'bg-[#D4AF37] text-white'
+                  ? 'bg-[#1e3a5f] text-white'
                   : 'bg-white text-gray-600 hover:bg-gray-50'
               }`}
             >
@@ -128,21 +135,12 @@ const ExperiencesScreen: React.FC<ExperiencesScreenProps> = ({ onBack }) => {
                 <p className="text-gray-600 mb-4 leading-relaxed">
                   {experience.description}
                 </p>
-                {experience.added ? (
-                  <div className="flex items-center gap-2 text-green-600">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                    <span className="font-light text-sm uppercase tracking-wide">Experience Requested</span>
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => handleAddExperience(experience.id)}
-                    className="bg-[#D4AF37] text-white px-6 py-2 rounded font-light uppercase text-sm tracking-wide hover:bg-[#C4A137] transition-colors"
-                  >
-                    Request Experience
-                  </button>
-                )}
+                <button
+                  onClick={() => handleAddExperience(experience.name)}
+                  className="bg-[#1e3a5f] text-white px-6 py-2 rounded font-light uppercase text-sm tracking-wide hover:brightness-110 transition-all"
+                >
+                  Request Experience
+                </button>
               </div>
             ))}
           </div>

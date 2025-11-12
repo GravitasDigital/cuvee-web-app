@@ -8,6 +8,7 @@ export default {
     extend: {
       colors: {
         'cuvee-gold': '#D4AF37',
+        'cuvee-navy': '#1e3a5f',
         'cuvee-dark': '#1F2937',
         'cuvee-gray': '#4B5563',
         'cuvee-lite': '#F3F4F6',

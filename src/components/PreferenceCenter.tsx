@@ -98,7 +98,7 @@ const PreferenceCenter: React.FC<PreferenceCenterProps> = ({
               onClick={() => onSelect(option)}
               className={`px-4 py-3 rounded-lg font-light text-sm transition-all text-left ${
                 isSelected
-                  ? 'bg-[#D4AF37] text-white'
+                  ? 'bg-[#1e3a5f] text-white'
                   : 'bg-white text-gray-600 hover:bg-gray-50'
               }`}
             >
@@ -119,17 +119,22 @@ const PreferenceCenter: React.FC<PreferenceCenterProps> = ({
 
   return (
     <div className="min-h-screen bg-[rgb(243,244,246)]">
-      <div className="max-w-7xl mx-auto p-6 pb-32">
-        <button
-          onClick={onBack}
-          className="mb-8 flex items-center gap-2 hover:opacity-70 transition-opacity"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-          <span className="uppercase text-sm tracking-wide font-light">Return</span>
-        </button>
+      {/* Sticky Header */}
+      <div className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-200/50 shadow-sm">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <button
+            onClick={onBack}
+            className="flex items-center gap-2 hover:opacity-70 transition-opacity"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            <span className="uppercase text-sm tracking-wide font-light">Return</span>
+          </button>
+        </div>
+      </div>
 
+      <div className="max-w-7xl mx-auto p-6 pb-32">
         <h1 className="text-3xl font-thin uppercase tracking-wide mb-8">Travel Preferences</h1>
 
         <div className="space-y-6">
@@ -221,7 +226,7 @@ const PreferenceCenter: React.FC<PreferenceCenterProps> = ({
               <button
                 onClick={() => setNotifications(!notifications)}
                 className={`relative inline-flex h-8 w-16 flex-shrink-0 items-center rounded-full transition-colors ${
-                  notifications ? 'bg-[#D4AF37]' : 'bg-gray-300'
+                  notifications ? 'bg-[#1e3a5f]' : 'bg-gray-300'
                 }`}
               >
                 <span
@@ -239,7 +244,7 @@ const PreferenceCenter: React.FC<PreferenceCenterProps> = ({
           <div className="max-w-7xl mx-auto">
             <button
               onClick={handleSave}
-              className="w-full bg-[#D4AF37] text-white py-3 rounded font-light text-base uppercase tracking-wide hover:bg-[#C4A137] transition-colors"
+              className="w-full bg-[#1e3a5f] text-white py-3 rounded font-light text-base uppercase tracking-wide hover:brightness-110 transition-all"
             >
               Save My Preferences
             </button>
