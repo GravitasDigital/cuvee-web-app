@@ -403,7 +403,7 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({ onNavigate, onLogout 
           </section>
 
           {/* Bottom CTA - Glassmorphism */}
-          <section className={`flex-shrink-0 px-4 py-4 mt-auto transition-all duration-1000 delay-400 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'}`}>
+          <section className={`flex-shrink-0 px-4 py-4 pb-6 transition-all duration-1000 delay-400 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'}`}>
             <div className="bg-gradient-to-r from-[#1F2937]/90 to-[#374151]/90 backdrop-blur-md rounded-xl p-4 text-center text-white shadow-lg border border-white/10">
               <h2 className="text-lg font-light uppercase tracking-wide mb-3">Explore More</h2>
               <a
