@@ -3,6 +3,7 @@
  * Proxies requests to HubSpot and calculates tier information
  */
 
+import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import axios from 'axios';
@@ -12,9 +13,16 @@ const app = express();
 const PORT = process.env.PORT || 8080;
 
 // HubSpot API Configuration
-const HUBSPOT_API_TOKEN = process.env.HUBSPOT_API_TOKEN || 'pat-na1-1389aa9c-6e1c-4574-9265-ec4a4425b8ad';
+const HUBSPOT_API_TOKEN = process.env.HUBSPOT_API_TOKEN;
 const CONTACTS_API_URL = 'https://api.hubapi.com/crm/v3/objects/contacts/search';
 const DEALS_API_URL = 'https://api.hubapi.com/crm/v3/objects/deals/search';
+
+// Validate required environment variables
+if (!HUBSPOT_API_TOKEN) {
+  console.error('ERROR: HUBSPOT_API_TOKEN environment variable is required');
+  console.error('Please set it in your .env file or environment');
+  process.exit(1);
+}
 
 // Enable CORS for local development
 app.use(cors());

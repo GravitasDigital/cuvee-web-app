@@ -1,0 +1,42 @@
+CUVÉE WEB APP - INSTALLATION GUIDE
+===================================
+
+QUICK SETUP:
+------------
+
+1. Upload all files from this folder to:
+   www/experiments.digital/public_html/cuvee-app/
+
+2. The app will be accessible at:
+   https://experiments.digital/cuvee-app/
+
+IMPORTANT NOTES:
+----------------
+
+⚠️  The HubSpot API integration requires a backend server.
+
+For now, the app will work but the Voyage Passport will show 
+"demo mode" data instead of real HubSpot data.
+
+TO ENABLE REAL HUBSPOT DATA:
+-----------------------------
+
+Option A: Run Node.js API (if your host supports Node.js)
+  1. Upload api-server.js to your server
+  2. Install: npm install express cors axios
+  3. Run: node api-server.js
+  
+Option B: Convert to PHP API (recommended for shared hosting)
+  - Contact me and I'll convert the API to PHP which works on your current host
+
+TESTING:
+--------
+
+1. Visit: https://experiments.digital/cuvee-app/
+2. Click "Login" 
+3. Enter any email address
+4. Click "My Reservations"
+5. See the beautiful Voyage Passport card at the bottom!
+
+The app is fully functional - just the HubSpot data fetching needs
+the backend API to be set up.

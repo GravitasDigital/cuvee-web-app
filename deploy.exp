@@ -1,0 +1,30 @@
+#!/usr/bin/expect -f
+
+set timeout 60
+set password "K2rossiski!!11"
+set host "u1897-3ull1ca1xot6@ssh.experiments.digital"
+set port "18765"
+
+# Upload API server
+spawn scp -P $port -o StrictHostKeyChecking=no server.js $host:www/experiments.digital/public_html/api-server.js
+expect {
+    "password:" {
+        send "$password\r"
+        expect eof
+    }
+    eof
+}
+
+# Upload dist directory
+spawn scp -P $port -o StrictHostKeyChecking=no -r dist/* $host:www/experiments.digital/public_html/cuvee-app/
+expect {
+    "password:" {
+        send "$password\r"
+        expect eof
+    }
+    eof
+}
+
+puts "\n✅ Deployment complete!"
+puts "📡 API Server: https://experiments.digital/api-server.js"
+puts "🌐 Web App: https://experiments.digital/cuvee-app/"
