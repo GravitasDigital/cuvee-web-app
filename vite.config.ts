@@ -7,5 +7,12 @@ export default defineConfig({
   server: {
     port: 3000,
     open: true
+  },
+  preview: {
+    allowedHosts: [
+      'localhost',
+      '.up.railway.app',
+      'cuvee-web-app-production.up.railway.app'
+    ]
   }
 })
