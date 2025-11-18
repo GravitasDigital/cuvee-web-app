@@ -10,7 +10,6 @@
     "api": "node server.js",
     "dev:all": "npm run api & npm run dev",
     "build": "tsc && vite build",
-    "preview": "vite preview",
     "start": "node server.js"
   },
   "dependencies": {
