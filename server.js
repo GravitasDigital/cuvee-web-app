@@ -9,10 +9,10 @@ import axios from 'axios';
 import * as cheerio from 'cheerio';
 
 const app = express();
-const PORT = 8080;
+const PORT = process.env.PORT || 8080;
 
 // HubSpot API Configuration
-const HUBSPOT_API_TOKEN = 'pat-na1-1389aa9c-6e1c-4574-9265-ec4a4425b8ad';
+const HUBSPOT_API_TOKEN = process.env.HUBSPOT_API_TOKEN || 'pat-na1-1389aa9c-6e1c-4574-9265-ec4a4425b8ad';
 const CONTACTS_API_URL = 'https://api.hubapi.com/crm/v3/objects/contacts/search';
 const DEALS_API_URL = 'https://api.hubapi.com/crm/v3/objects/deals/search';
 
