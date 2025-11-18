@@ -1,6 +1,7 @@
 /**
  * Simple Express server for Voyage Passport API
  * Proxies requests to HubSpot and calculates tier information
+ * Deployed on Railway
  */
 
 import 'dotenv/config';
