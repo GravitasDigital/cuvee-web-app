@@ -10,7 +10,8 @@
     "api": "node server.js",
     "dev:all": "npm run api & npm run dev",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "start": "node server.js"
   },
   "dependencies": {
     "axios": "^1.7.7",

@@ -28,6 +28,15 @@ if (!HUBSPOT_API_TOKEN) {
 app.use(cors());
 app.use(express.json());
 
+// Serve static files from the dist directory (production build)
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+app.use(express.static(path.join(__dirname, 'dist')));
+
 // Tier configuration
 const TIERS = [
   {
@@ -978,6 +987,11 @@ app.get('/api/featured-offers', async (req, res) => {
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', message: 'Voyage Passport API is running' });
+});
+
+// Serve index.html for all other routes (client-side routing)
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
 
 // Start server
