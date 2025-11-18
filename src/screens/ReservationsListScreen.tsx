@@ -56,7 +56,12 @@ const ReservationsListScreen: React.FC<ReservationsListScreenProps> = ({ onBack,
           return
         }
 
-        const response = await fetch(`http://localhost:8080/api/reservations?email=${encodeURIComponent(userInfo.email)}`)
+        // Use relative URL in production, localhost in development
+        const apiUrl = window.location.hostname === 'localhost'
+          ? `http://localhost:8080/api/reservations?email=${encodeURIComponent(userInfo.email)}`
+          : `/api/reservations?email=${encodeURIComponent(userInfo.email)}`
+
+        const response = await fetch(apiUrl)
         const data = await response.json()
 
         if (data.success && data.reservations) {
@@ -84,7 +89,12 @@ const ReservationsListScreen: React.FC<ReservationsListScreenProps> = ({ onBack,
   useEffect(() => {
     const fetchOffers = async () => {
       try {
-        const response = await fetch('http://localhost:8080/api/featured-offers')
+        // Use relative URL in production, localhost in development
+        const apiUrl = window.location.hostname === 'localhost'
+          ? 'http://localhost:8080/api/featured-offers'
+          : '/api/featured-offers'
+
+        const response = await fetch(apiUrl)
         const data = await response.json()
 
         if (data.success && data.offers) {

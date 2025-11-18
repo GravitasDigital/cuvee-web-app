@@ -49,7 +49,12 @@ const ReservationDetailScreen: React.FC<ReservationDetailScreenProps> = ({ onBac
           return
         }
 
-        const response = await fetch(`http://localhost:8080/api/reservations?email=${encodeURIComponent(userInfo.email)}`)
+        // Use relative URL in production, localhost in development
+        const apiUrl = window.location.hostname === 'localhost'
+          ? `http://localhost:8080/api/reservations?email=${encodeURIComponent(userInfo.email)}`
+          : `/api/reservations?email=${encodeURIComponent(userInfo.email)}`
+
+        const response = await fetch(apiUrl)
         const data = await response.json()
 
         if (data.success && data.reservations) {
@@ -107,9 +112,12 @@ const ReservationDetailScreen: React.FC<ReservationDetailScreenProps> = ({ onBac
         setIsLoadingExperiences(true)
 
         // Call backend API which will scrape the destination page for experiences
-        const response = await fetch(
-          `http://localhost:8080/api/property-experiences?propertyName=${encodeURIComponent(reservation.propertyName)}&location=${encodeURIComponent(reservation.location)}`
-        )
+        // Use relative URL in production, localhost in development
+        const apiUrl = window.location.hostname === 'localhost'
+          ? `http://localhost:8080/api/property-experiences?propertyName=${encodeURIComponent(reservation.propertyName)}&location=${encodeURIComponent(reservation.location)}`
+          : `/api/property-experiences?propertyName=${encodeURIComponent(reservation.propertyName)}&location=${encodeURIComponent(reservation.location)}`
+
+        const response = await fetch(apiUrl)
         const data = await response.json()
 
         if (data.success && data.experiences) {

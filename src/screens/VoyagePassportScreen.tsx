@@ -61,7 +61,12 @@ const VoyagePassportScreen: React.FC<VoyagePassportScreenProps> = ({ onBack }) =
         }
 
         // Call PHP API endpoint (served by PHP built-in server on port 8080)
-        const response = await axios.get(`http://localhost:8080/api-voyage-passport.php?email=${encodeURIComponent(userInfo.email)}`)
+        // Use relative URL in production, localhost in development
+        const apiUrl = window.location.hostname === 'localhost'
+          ? `http://localhost:8080/api-voyage-passport.php?email=${encodeURIComponent(userInfo.email)}`
+          : `/api-voyage-passport.php?email=${encodeURIComponent(userInfo.email)}`
+
+        const response = await axios.get(apiUrl)
 
         if (response.data.success) {
           setVoyageData(response.data)
