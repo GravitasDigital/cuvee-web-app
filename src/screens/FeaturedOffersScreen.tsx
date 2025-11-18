@@ -27,7 +27,8 @@ function FeaturedOffersScreen({ onBack }: FeaturedOffersScreenProps) {
   const fetchOffers = async () => {
     try {
       setLoading(true)
-      const apiUrl = import.meta.env.MODE === 'development'
+      // Use relative URL in production, localhost in development
+      const apiUrl = window.location.hostname === 'localhost'
         ? 'http://localhost:8080/api/featured-offers'
         : '/api/featured-offers'
 

@@ -34,7 +34,8 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({ onNavigate, onLogout 
   useEffect(() => {
     const fetchOffers = async () => {
       try {
-        const apiUrl = import.meta.env.MODE === 'development'
+        // Use relative URL in production, localhost in development
+        const apiUrl = window.location.hostname === 'localhost'
           ? 'http://localhost:8080/api/featured-offers'
           : '/api/featured-offers'
         const response = await fetch(apiUrl)
