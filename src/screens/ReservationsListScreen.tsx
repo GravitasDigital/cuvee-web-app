@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import VoyagePassportCard from '../components/VoyagePassportCard'
+import { isGuestUser, getUserInfo } from '../utils/auth'
 
 interface ReservationsListScreenProps {
   onBack: () => void
@@ -22,97 +23,116 @@ interface Reservation {
   maxGuests: number
 }
 
+interface FeaturedOffer {
+  id: number
+  title: string
+  featuredImage: string
+  offerTitle: string
+  offerSubtitle: string
+  offerType: string
+  offerLink: string
+}
+
 const ReservationsListScreen: React.FC<ReservationsListScreenProps> = ({ onBack, onNavigate }) => {
   const [isLoaded, setIsLoaded] = useState(false)
   const [isPastTripsExpanded, setIsPastTripsExpanded] = useState(false)
+  const [reservations, setReservations] = useState<Reservation[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [featuredOffers, setFeaturedOffers] = useState<FeaturedOffer[]>([])
+  const [isLoadingOffers, setIsLoadingOffers] = useState(true)
+  const offersScrollRef = useRef<HTMLDivElement>(null)
+
+  // Fetch reservations from API
+  useEffect(() => {
+    const fetchReservations = async () => {
+      try {
+        setIsLoading(true)
+        const userInfo = getUserInfo()
+
+        if (!userInfo?.email) {
+          console.warn('No email found in user info')
+          setIsLoading(false)
+          return
+        }
+
+        const response = await fetch(`http://localhost:8080/api/reservations?email=${encodeURIComponent(userInfo.email)}`)
+        const data = await response.json()
+
+        if (data.success && data.reservations) {
+          setReservations(data.reservations)
+        } else {
+          setError(data.message || 'Failed to load reservations')
+        }
+      } catch (err) {
+        console.error('Error fetching reservations:', err)
+        setError('Failed to load reservations from HubSpot')
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchReservations()
+  }, [])
 
   // Trigger entrance animations
   useEffect(() => {
     setIsLoaded(true)
   }, [])
 
-  // Mock data with multiple reservations
-  const allReservations: Reservation[] = [
-    {
-      id: '1',
-      status: 'current',
-      propertyName: 'Luxury Mountain Villa',
-      location: 'Aspen, Colorado',
-      address: '123 Mountain View Drive, Aspen, CO 81611',
-      startDate: 'Dec 15, 2024',
-      endDate: 'Dec 22, 2024',
-      checkInTime: '4:00 PM',
-      checkOutTime: '11:00 AM',
-      image: 'https://images.unsplash.com/photo-1605540436563-5bca919ae766?q=80&w=2070&auto=format&fit=crop',
-      bedrooms: 5,
-      bathrooms: 5.5,
-      maxGuests: 12,
-    },
-    {
-      id: '2',
-      status: 'upcoming',
-      propertyName: 'Ocean View Paradise',
-      location: 'Maui, Hawaii',
-      address: '456 Beachfront Way, Wailea, HI 96753',
-      startDate: 'Jan 10, 2025',
-      endDate: 'Jan 17, 2025',
-      checkInTime: '3:00 PM',
-      checkOutTime: '10:00 AM',
-      image: 'https://images.unsplash.com/photo-1613490493576-7fde63acd811?q=80&w=2071&auto=format&fit=crop',
-      bedrooms: 4,
-      bathrooms: 4,
-      maxGuests: 10,
-    },
-    {
-      id: '3',
-      status: 'upcoming',
-      propertyName: 'Desert Modern Retreat',
-      location: 'Scottsdale, Arizona',
-      address: '789 Cactus Canyon Road, Scottsdale, AZ 85255',
-      startDate: 'Feb 14, 2025',
-      endDate: 'Feb 21, 2025',
-      checkInTime: '4:00 PM',
-      checkOutTime: '11:00 AM',
-      image: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=2075&auto=format&fit=crop',
-      bedrooms: 6,
-      bathrooms: 6,
-      maxGuests: 14,
-    },
-    {
-      id: '4',
-      status: 'past',
-      propertyName: 'Park City Ski Chalet',
-      location: 'Park City, Utah',
-      address: '321 Powder Lane, Park City, UT 84060',
-      startDate: 'Nov 20, 2024',
-      endDate: 'Nov 27, 2024',
-      checkInTime: '4:00 PM',
-      checkOutTime: '11:00 AM',
-      image: 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?q=80&w=2070&auto=format&fit=crop',
-      bedrooms: 4,
-      bathrooms: 4.5,
-      maxGuests: 10,
-    },
-    {
-      id: '5',
-      status: 'past',
-      propertyName: 'Coastal Villa Retreat',
-      location: 'Big Sur, California',
-      address: '555 Pacific Coast Highway, Big Sur, CA 93920',
-      startDate: 'Oct 5, 2024',
-      endDate: 'Oct 12, 2024',
-      checkInTime: '3:00 PM',
-      checkOutTime: '11:00 AM',
-      image: 'https://images.unsplash.com/photo-1602343168117-bb8ffe3e2e9f?q=80&w=2025&auto=format&fit=crop',
-      bedrooms: 3,
-      bathrooms: 3,
-      maxGuests: 8,
-    },
-  ]
+  // Fetch featured offers from WordPress
+  useEffect(() => {
+    const fetchOffers = async () => {
+      try {
+        const response = await fetch('http://localhost:8080/api/featured-offers')
+        const data = await response.json()
 
-  const currentReservations = allReservations.filter(r => r.status === 'current')
-  const upcomingReservations = allReservations.filter(r => r.status === 'upcoming')
-  const pastReservations = allReservations.filter(r => r.status === 'past')
+        if (data.success && data.offers) {
+          setFeaturedOffers(data.offers)
+        }
+      } catch (error) {
+        console.error('Error fetching featured offers:', error)
+      } finally {
+        setIsLoadingOffers(false)
+      }
+    }
+
+    fetchOffers()
+  }, [])
+
+  const scrollOffers = (direction: 'left' | 'right') => {
+    if (offersScrollRef.current) {
+      const scrollAmount = offersScrollRef.current.clientWidth * 0.75
+      offersScrollRef.current.scrollBy({
+        left: direction === 'left' ? -scrollAmount : scrollAmount,
+        behavior: 'smooth'
+      })
+    }
+  }
+
+  // Filter reservations based on user type
+  // Guest users only see current stay or next upcoming stay
+  const isGuest = isGuestUser()
+
+  let currentReservations = reservations.filter(r => r.status === 'current')
+  let upcomingReservations = reservations.filter(r => r.status === 'upcoming')
+  let pastReservations = reservations.filter(r => r.status === 'past')
+
+  if (isGuest) {
+    // For guests, show only current stay or next upcoming stay
+    if (currentReservations.length > 0) {
+      // If there's a current stay, show only that
+      upcomingReservations = []
+      pastReservations = []
+    } else if (upcomingReservations.length > 0) {
+      // If no current stay, show only the next upcoming reservation
+      upcomingReservations = [upcomingReservations[0]]
+      pastReservations = []
+    } else {
+      // No current or upcoming reservations
+      pastReservations = []
+    }
+  }
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -205,10 +225,10 @@ const ReservationsListScreen: React.FC<ReservationsListScreenProps> = ({ onBack,
       {/* Sticky Header */}
       <div className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-200/50 shadow-sm">
         <div className="max-w-4xl mx-auto px-6 py-4">
-          <div className={`flex items-center transition-all duration-700 ${isLoaded ? 'translate-y-0 opacity-100' : '-translate-y-4 opacity-0'}`}>
+          <div className={`relative flex items-center justify-center transition-all duration-700 ${isLoaded ? 'translate-y-0 opacity-100' : '-translate-y-4 opacity-0'}`}>
             <button
               onClick={onBack}
-              className="mr-4 hover:opacity-70 transition-opacity"
+              className="absolute left-0 hover:opacity-70 transition-opacity"
             >
               <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -291,8 +311,34 @@ const ReservationsListScreen: React.FC<ReservationsListScreenProps> = ({ onBack,
           </div>
         )}
 
+        {/* Loading State */}
+        {isLoading && (
+          <div className="text-center py-16">
+            <div className="text-gray-400 mb-4">
+              <svg className="w-12 h-12 mx-auto animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+            </div>
+            <h3 className="text-xl font-light uppercase tracking-wide text-gray-600 mb-2">Loading Reservations...</h3>
+            <p className="text-gray-500 text-sm">Fetching your stays from HubSpot</p>
+          </div>
+        )}
+
+        {/* Error State */}
+        {error && !isLoading && (
+          <div className="text-center py-16">
+            <div className="text-red-400 mb-4">
+              <svg className="w-24 h-24 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <h3 className="text-xl font-light uppercase tracking-wide text-gray-600 mb-2">Error Loading Reservations</h3>
+            <p className="text-gray-500 text-sm">{error}</p>
+          </div>
+        )}
+
         {/* Empty State (if no reservations) */}
-        {allReservations.length === 0 && (
+        {!isLoading && !error && reservations.length === 0 && (
           <div className="text-center py-16">
             <div className="text-gray-400 mb-4">
               <svg className="w-24 h-24 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -301,6 +347,120 @@ const ReservationsListScreen: React.FC<ReservationsListScreenProps> = ({ onBack,
             </div>
             <h3 className="text-xl font-light uppercase tracking-wide text-gray-600 mb-2">No Reservations Yet</h3>
             <p className="text-gray-500 text-sm">Start planning your luxury getaway</p>
+          </div>
+        )}
+
+        {/* Featured Offers Section - Strong CTA */}
+        {!isLoading && !error && (
+          <div className={`mb-8 transition-all duration-700 delay-500 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'}`}>
+            <div className="bg-gradient-to-br from-[#D4AF37]/10 to-[#C0A062]/5 backdrop-blur-sm rounded-2xl p-6 border border-[#D4AF37]/20 shadow-lg">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h2 className="text-lg font-light uppercase tracking-wide text-gray-800 mb-1 flex items-center gap-2">
+                    <svg className="w-5 h-5 text-[#D4AF37]" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                    </svg>
+                    Exclusive Offers
+                  </h2>
+                  <p className="text-xs text-gray-600">Special deals curated for you</p>
+                </div>
+                {featuredOffers.length >= 3 && (
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => scrollOffers('left')}
+                      className="w-8 h-8 rounded-full bg-white/80 backdrop-blur-sm shadow-md flex items-center justify-center hover:bg-white transition-colors border border-gray-200"
+                      aria-label="Previous offer"
+                    >
+                      <svg className="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                      </svg>
+                    </button>
+                    <button
+                      onClick={() => scrollOffers('right')}
+                      className="w-8 h-8 rounded-full bg-white/80 backdrop-blur-sm shadow-md flex items-center justify-center hover:bg-white transition-colors border border-gray-200"
+                      aria-label="Next offer"
+                    >
+                      <svg className="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {isLoadingOffers ? (
+                <div className="flex items-center justify-center h-[200px] bg-white/50 rounded-xl">
+                  <div className="text-sm text-gray-500">Loading offers...</div>
+                </div>
+              ) : featuredOffers.length > 0 ? (
+                <div
+                  ref={offersScrollRef}
+                  className={`flex gap-3 ${featuredOffers.length >= 3 ? 'overflow-x-auto snap-x snap-mandatory scrollbar-hide cursor-grab active:cursor-grabbing' : ''}`}
+                  style={featuredOffers.length >= 3 ? {
+                    scrollbarWidth: 'none',
+                    msOverflowStyle: 'none',
+                    WebkitOverflowScrolling: 'touch',
+                    scrollBehavior: 'smooth',
+                    touchAction: 'pan-x'
+                  } : {}}
+                >
+                  {featuredOffers.map((offer) => (
+                    <a
+                      key={offer.id}
+                      href={offer.offerLink || 'https://www.cuvee.com/offers'}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block rounded-xl overflow-hidden shadow-lg active:opacity-80 transition-all hover:shadow-2xl hover:scale-[1.02] flex-shrink-0 snap-start"
+                      style={
+                        featuredOffers.length === 1
+                          ? { width: '100%', height: '200px' }
+                          : featuredOffers.length === 2
+                          ? { width: 'calc(50% - 6px)', height: '200px' }
+                          : { minWidth: 'calc(85% - 12px)', height: '200px' }
+                      }
+                    >
+                      <div className="relative w-full h-full">
+                        <div
+                          className="absolute inset-0 bg-cover bg-center bg-gray-200"
+                          style={{
+                            backgroundImage: offer.featuredImage
+                              ? `url(${offer.featuredImage})`
+                              : 'url(https://www.cuvee.com/wp-content/uploads/2024/07/header-usa.webp)'
+                          }}
+                        >
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-black/30"></div>
+                          {offer.offerType && (
+                            <div className="absolute top-4 right-4 bg-[#D4AF37] text-white text-xs font-semibold uppercase tracking-wide px-3 py-1.5 rounded-full shadow-lg">
+                              {offer.offerType}
+                            </div>
+                          )}
+                          <div className="absolute bottom-0 left-0 right-0 p-5 bg-gradient-to-t from-black/60 to-transparent">
+                            <h3 className="text-base font-semibold uppercase tracking-wide text-white mb-2 drop-shadow-lg">
+                              {offer.offerTitle}
+                            </h3>
+                            {offer.offerSubtitle && (
+                              <p className="text-sm text-white/95 font-light drop-shadow-md mb-3">
+                                {offer.offerSubtitle}
+                              </p>
+                            )}
+                            <div className="flex items-center gap-2 text-white/90 text-xs font-light">
+                              <span>Learn More</span>
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                              </svg>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </a>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex items-center justify-center h-[200px] bg-white/50 rounded-xl">
+                  <div className="text-sm text-gray-500">No featured offers available</div>
+                </div>
+              )}
+            </div>
           </div>
         )}
 
@@ -333,6 +493,7 @@ const ReservationsListScreen: React.FC<ReservationsListScreenProps> = ({ onBack,
           }
           .animate-float { animation: float 20s ease-in-out infinite; }
           .animate-float-delayed { animation: float-delayed 25s ease-in-out infinite; }
+          .scrollbar-hide::-webkit-scrollbar { display: none; }
         `}</style>
       </div>
     </div>

@@ -1,3 +1,6 @@
+import { useState, useEffect } from 'react'
+import { getUserInfo } from '../utils/auth'
+
 interface ReservationDetailScreenProps {
   onBack: () => void
   onNavigate: (screen: string) => void
@@ -5,6 +8,7 @@ interface ReservationDetailScreenProps {
 }
 
 interface ReservationData {
+  id: string
   propertyName: string
   location: string
   address: string
@@ -20,100 +24,107 @@ interface ReservationData {
   maxGuests: number
   wifi: string
   wifiPassword: string
+  amount: number
+  confirmationNumber: string
+  status: string
 }
 
 const ReservationDetailScreen: React.FC<ReservationDetailScreenProps> = ({ onBack, onNavigate, reservationId }) => {
-  // Mock reservation data - in production this would come from an API
-  const allReservations: Record<string, ReservationData> = {
-    '1': {
-      propertyName: 'Luxury Mountain Villa',
-      location: 'Aspen, Colorado',
-      address: '123 Mountain View Drive, Aspen, CO 81611',
-      startDate: 'Dec 15, 2024',
-      endDate: 'Dec 22, 2024',
-      image: 'https://images.unsplash.com/photo-1605540436563-5bca919ae766?q=80&w=2070&auto=format&fit=crop',
-      checkInTime: '4:00 PM',
-      checkOutTime: '11:00 AM',
-      checkInDetails: 'Keys will be available at the front desk. Please bring a valid ID.',
-      phone: '+1 (970) 555-0123',
-      bedrooms: 5,
-      bathrooms: 5.5,
-      maxGuests: 12,
-      wifi: 'CuveeAspen_Guest',
-      wifiPassword: 'LuxuryStay2025',
-    },
-    '2': {
-      propertyName: 'Ocean View Paradise',
-      location: 'Maui, Hawaii',
-      address: '456 Beachfront Way, Wailea, HI 96753',
-      startDate: 'Jan 10, 2025',
-      endDate: 'Jan 17, 2025',
-      image: 'https://images.unsplash.com/photo-1613490493576-7fde63acd811?q=80&w=2071&auto=format&fit=crop',
-      checkInTime: '3:00 PM',
-      checkOutTime: '10:00 AM',
-      checkInDetails: 'Self check-in with smart lock. Code will be sent 24 hours before arrival.',
-      phone: '+1 (808) 555-0456',
-      bedrooms: 4,
-      bathrooms: 4,
-      maxGuests: 10,
-      wifi: 'CuveeMaui_Ocean',
-      wifiPassword: 'Paradise2025',
-    },
-    '3': {
-      propertyName: 'Desert Modern Retreat',
-      location: 'Scottsdale, Arizona',
-      address: '789 Cactus Canyon Road, Scottsdale, AZ 85255',
-      startDate: 'Feb 14, 2025',
-      endDate: 'Feb 21, 2025',
-      image: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=2075&auto=format&fit=crop',
-      checkInTime: '4:00 PM',
-      checkOutTime: '11:00 AM',
-      checkInDetails: 'Meet the property manager at the entrance for personal check-in.',
-      phone: '+1 (480) 555-0789',
-      bedrooms: 6,
-      bathrooms: 6,
-      maxGuests: 14,
-      wifi: 'CuveeScottsdale_Desert',
-      wifiPassword: 'SunsetViews2025',
-    },
-    '4': {
-      propertyName: 'Park City Ski Chalet',
-      location: 'Park City, Utah',
-      address: '321 Powder Lane, Park City, UT 84060',
-      startDate: 'Nov 20, 2024',
-      endDate: 'Nov 27, 2024',
-      image: 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?q=80&w=2070&auto=format&fit=crop',
-      checkInTime: '4:00 PM',
-      checkOutTime: '11:00 AM',
-      checkInDetails: 'Ski valet service available. Keys at main lodge reception.',
-      phone: '+1 (435) 555-0321',
-      bedrooms: 4,
-      bathrooms: 4.5,
-      maxGuests: 10,
-      wifi: 'CuveeParkCity_Ski',
-      wifiPassword: 'PowderDays2024',
-    },
-    '5': {
-      propertyName: 'Coastal Villa Retreat',
-      location: 'Big Sur, California',
-      address: '555 Pacific Coast Highway, Big Sur, CA 93920',
-      startDate: 'Oct 5, 2024',
-      endDate: 'Oct 12, 2024',
-      image: 'https://images.unsplash.com/photo-1602343168117-bb8ffe3e2e9f?q=80&w=2025&auto=format&fit=crop',
-      checkInTime: '3:00 PM',
-      checkOutTime: '11:00 AM',
-      checkInDetails: 'Remote property - detailed directions will be sent prior to arrival.',
-      phone: '+1 (831) 555-0555',
-      bedrooms: 3,
-      bathrooms: 3,
-      maxGuests: 8,
-      wifi: 'CuveeBigSur_Coast',
-      wifiPassword: 'OceanBreeze2024',
-    },
-  }
+  const [reservation, setReservation] = useState<ReservationData | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [experiences, setExperiences] = useState<any[]>([])
+  const [isLoadingExperiences, setIsLoadingExperiences] = useState(false)
 
-  // Get the reservation data based on ID, default to first one if not found
-  const mockReservation = allReservations[reservationId || '1'] || allReservations['1']
+  // Fetch reservation data from API
+  useEffect(() => {
+    const fetchReservation = async () => {
+      try {
+        setIsLoading(true)
+        const userInfo = getUserInfo()
+
+        if (!userInfo?.email) {
+          setError('No user email found')
+          setIsLoading(false)
+          return
+        }
+
+        const response = await fetch(`http://localhost:8080/api/reservations?email=${encodeURIComponent(userInfo.email)}`)
+        const data = await response.json()
+
+        if (data.success && data.reservations) {
+          // Find the specific reservation by ID
+          const foundReservation = data.reservations.find((r: any) => r.id === reservationId)
+
+          if (foundReservation) {
+            // Transform API data to match our interface
+            setReservation({
+              id: foundReservation.id,
+              propertyName: foundReservation.propertyName,
+              location: foundReservation.location || 'Location TBD',
+              address: foundReservation.address || 'Address details will be provided closer to your stay',
+              startDate: foundReservation.startDate,
+              endDate: foundReservation.endDate,
+              image: foundReservation.image,
+              checkInTime: foundReservation.checkInTime,
+              checkOutTime: foundReservation.checkOutTime,
+              checkInDetails: 'Check-in details will be provided 48 hours before arrival.',
+              phone: '+1 (970) 555-0100',
+              bedrooms: foundReservation.bedrooms || 0,
+              bathrooms: foundReservation.bathrooms || 0,
+              maxGuests: foundReservation.maxGuests || 0,
+              wifi: 'Network details will be provided upon arrival',
+              wifiPassword: 'Provided at check-in',
+              amount: foundReservation.amount,
+              confirmationNumber: foundReservation.confirmationNumber || foundReservation.id,
+              status: foundReservation.status
+            })
+          } else {
+            setError('Reservation not found')
+          }
+        } else {
+          setError(data.message || 'Failed to load reservation')
+        }
+      } catch (err) {
+        console.error('Error fetching reservation:', err)
+        setError('Failed to load reservation details')
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    if (reservationId) {
+      fetchReservation()
+    }
+  }, [reservationId])
+
+  // Fetch experiences from destination page on website
+  useEffect(() => {
+    const fetchExperiences = async () => {
+      if (!reservation?.propertyName || !reservation?.location) return
+
+      try {
+        setIsLoadingExperiences(true)
+
+        // Call backend API which will scrape the destination page for experiences
+        const response = await fetch(
+          `http://localhost:8080/api/property-experiences?propertyName=${encodeURIComponent(reservation.propertyName)}&location=${encodeURIComponent(reservation.location)}`
+        )
+        const data = await response.json()
+
+        if (data.success && data.experiences) {
+          setExperiences(data.experiences)
+        }
+      } catch (err) {
+        console.error('Error fetching experiences:', err)
+        // Fail silently - experiences are not critical
+      } finally {
+        setIsLoadingExperiences(false)
+      }
+    }
+
+    fetchExperiences()
+  }, [reservation?.propertyName, reservation?.location])
 
   const amenities = [
     'Private Hot Tub',
@@ -126,52 +137,83 @@ const ReservationDetailScreen: React.FC<ReservationDetailScreenProps> = ({ onBac
     'Daily Housekeeping',
   ]
 
-  const localRecommendations = [
-    {
-      category: 'Dining',
-      items: [
-        { name: 'Matsuhisa', description: 'World-class Japanese cuisine', distance: '0.3 mi' },
-        { name: 'Element 47', description: 'Fine dining with mountain views', distance: '0.5 mi' },
-        { name: 'Cache Cache', description: 'French bistro in downtown Aspen', distance: '1.2 mi' },
-      ]
-    },
-    {
-      category: 'Activities',
-      items: [
-        { name: 'Aspen Mountain', description: 'Premier ski resort', distance: '0.2 mi' },
-        { name: 'Maroon Bells', description: 'Iconic hiking destination', distance: '10 mi' },
-        { name: 'Aspen Art Museum', description: 'Contemporary art gallery', distance: '1.1 mi' },
-      ]
-    },
-  ]
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-[rgb(243,244,246)] flex items-center justify-center">
+        <div className="text-center">
+          <svg className="w-12 h-12 mx-auto animate-spin text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          <p className="mt-4 text-gray-600">Loading reservation details...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Error state
+  if (error || !reservation) {
+    return (
+      <div className="min-h-screen bg-[rgb(243,244,246)]">
+        <div className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-200/50 shadow-sm">
+          <div className="max-w-4xl mx-auto px-6 py-4">
+            <div className="relative flex items-center justify-center">
+              <button
+                onClick={onBack}
+                className="absolute left-0 hover:opacity-70 transition-opacity"
+              >
+                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <h1 className="text-3xl font-thin uppercase tracking-wide">My Reservations</h1>
+            </div>
+          </div>
+        </div>
+        <div className="max-w-4xl mx-auto p-6 pb-24 text-center">
+          <div className="text-red-400 mb-4">
+            <svg className="w-24 h-24 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <h3 className="text-xl font-light uppercase tracking-wide text-gray-600 mb-2">Error Loading Reservation</h3>
+          <p className="text-gray-500 text-sm">{error || 'Reservation not found'}</p>
+          <button
+            onClick={onBack}
+            className="mt-6 bg-[#1e3a5f] text-white px-6 py-3 rounded font-light uppercase text-sm tracking-wide hover:brightness-110 transition-all"
+          >
+            Back to Reservations
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-[rgb(243,244,246)]">
       {/* Sticky Header */}
       <div className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-200/50 shadow-sm">
         <div className="max-w-4xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <button
-                onClick={onBack}
-                className="mr-4 hover:opacity-70 transition-opacity"
-              >
-                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          <div className="relative flex items-center justify-between">
+            <button
+              onClick={onBack}
+              className="absolute left-0 hover:opacity-70 transition-opacity"
+            >
+              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
-            <h1 className="text-3xl font-thin uppercase tracking-wide">Welcome</h1>
-          </div>
+            <h1 className="text-3xl font-thin uppercase tracking-wide flex-1 text-center">My Reservations</h1>
 
-            {/* Weather Widget */}
+            {/* Weather Widget - Will be dynamic in future */}
             <div className="bg-white/80 backdrop-blur-sm rounded-lg px-4 py-2 shadow-md border border-gray-200/50">
               <div className="flex items-center gap-2">
                 <svg className="w-5 h-5 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
                   <path d="M10 2a6 6 0 00-6 6c0 4.314 6 10 6 10s6-5.686 6-10a6 6 0 00-6-6z"/>
                 </svg>
                 <div>
-                  <div className="text-xs font-light text-gray-600">Aspen, CO</div>
-                  <div className="text-sm font-normal text-gray-800">72°F ☀️</div>
+                  <div className="text-xs font-light text-gray-600">{reservation.location}</div>
+                  <div className="text-sm font-normal text-gray-800">--°F</div>
                 </div>
               </div>
             </div>
@@ -184,29 +226,29 @@ const ReservationDetailScreen: React.FC<ReservationDetailScreenProps> = ({ onBac
         <div className="bg-white rounded-lg shadow-sm overflow-hidden mb-6">
           <div
             className="h-64 bg-cover bg-center"
-            style={{ backgroundImage: `url(${mockReservation.image})` }}
+            style={{ backgroundImage: `url(${reservation.image})` }}
           ></div>
           <div className="p-6">
             <h2 className="text-2xl font-light uppercase tracking-wide text-[#1F2937] mb-3">
-              {mockReservation.propertyName}
+              {reservation.propertyName}
             </h2>
             <div className="flex items-center gap-2 text-gray-600 mb-2">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
-              <span className="text-base">{mockReservation.location}</span>
+              <span className="text-base">{reservation.location}</span>
             </div>
             <div className="flex items-center gap-2 text-gray-600 mb-4">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
-              <span className="text-base">{mockReservation.startDate} - {mockReservation.endDate}</span>
+              <span className="text-base">{reservation.startDate} - {reservation.endDate}</span>
             </div>
             <div className="flex gap-6 text-sm text-gray-600 pt-4 border-t border-gray-200">
-              <span>{mockReservation.bedrooms} Bedrooms</span>
-              <span>{mockReservation.bathrooms} Bathrooms</span>
-              <span>Up to {mockReservation.maxGuests} Guests</span>
+              <span>{reservation.bedrooms} Bedrooms</span>
+              <span>{reservation.bathrooms} Bathrooms</span>
+              <span>Up to {reservation.maxGuests} Guests</span>
             </div>
           </div>
         </div>
@@ -220,7 +262,7 @@ const ReservationDetailScreen: React.FC<ReservationDetailScreenProps> = ({ onBac
             View Itinerary
           </button>
           <a
-            href={`sms:${mockReservation.phone}`}
+            href={`sms:${reservation.phone}`}
             className="bg-[#1e3a5f] text-white py-3 rounded text-center font-light uppercase text-sm tracking-wide hover:brightness-110 transition-all"
           >
             Contact Concierge
@@ -235,7 +277,7 @@ const ReservationDetailScreen: React.FC<ReservationDetailScreenProps> = ({ onBac
 
           {/* Address */}
           <a
-            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mockReservation.address)}`}
+            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(reservation.address)}`}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-start gap-3 mb-6 hover:opacity-70 transition-opacity"
@@ -246,7 +288,7 @@ const ReservationDetailScreen: React.FC<ReservationDetailScreenProps> = ({ onBac
             </svg>
             <div>
               <div className="font-light text-xs uppercase tracking-wide text-gray-500 mb-1">Address</div>
-              <span className="text-base text-gray-700">{mockReservation.address}</span>
+              <span className="text-base text-gray-700">{reservation.address}</span>
             </div>
           </a>
 
@@ -257,8 +299,8 @@ const ReservationDetailScreen: React.FC<ReservationDetailScreenProps> = ({ onBac
             </svg>
             <div>
               <div className="font-light text-xs uppercase tracking-wide text-gray-500 mb-1">WiFi</div>
-              <div className="text-base text-gray-700">{mockReservation.wifi}</div>
-              <div className="text-sm text-gray-600">Password: {mockReservation.wifiPassword}</div>
+              <div className="text-base text-gray-700">{reservation.wifi}</div>
+              <div className="text-sm text-gray-600">Password: {reservation.wifiPassword}</div>
             </div>
           </div>
 
@@ -269,7 +311,7 @@ const ReservationDetailScreen: React.FC<ReservationDetailScreenProps> = ({ onBac
             </svg>
             <div>
               <div className="font-light text-xs uppercase tracking-wide text-gray-500 mb-1">Check-in Instructions</div>
-              <span className="text-base text-gray-700">{mockReservation.checkInDetails}</span>
+              <span className="text-base text-gray-700">{reservation.checkInDetails}</span>
             </div>
           </div>
 
@@ -283,11 +325,11 @@ const ReservationDetailScreen: React.FC<ReservationDetailScreenProps> = ({ onBac
               <div className="text-base text-gray-700">
                 <div className="flex gap-8 mb-1">
                   <span className="w-24">Arrival:</span>
-                  <span>{mockReservation.checkInTime}</span>
+                  <span>{reservation.checkInTime}</span>
                 </div>
                 <div className="flex gap-8">
                   <span className="w-24">Departure:</span>
-                  <span>{mockReservation.checkOutTime}</span>
+                  <span>{reservation.checkOutTime}</span>
                 </div>
               </div>
             </div>
@@ -311,46 +353,62 @@ const ReservationDetailScreen: React.FC<ReservationDetailScreenProps> = ({ onBac
           </div>
         </div>
 
-        {/* Local Recommendations */}
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-          <h3 className="text-xl font-light uppercase tracking-wide text-[#1F2937] mb-4">
-            Local Recommendations
-          </h3>
-          {localRecommendations.map((section, idx) => (
-            <div key={idx} className={idx > 0 ? 'mt-6' : ''}>
-              <h4 className="text-sm font-light uppercase tracking-wide text-gray-500 mb-3">
-                {section.category}
-              </h4>
-              <div className="space-y-3">
-                {section.items.map((item, itemIdx) => (
-                  <div key={itemIdx} className="border-l-2 border-[#D4AF37] pl-4">
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <div className="font-light text-base text-[#1F2937]">{item.name}</div>
-                        <div className="text-sm text-gray-600">{item.description}</div>
-                      </div>
-                      <span className="text-xs text-gray-500 whitespace-nowrap">{item.distance}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
+        {/* Property Experiences - Horizontal Swipeable Carousel */}
+        {experiences.length > 0 && (
+          <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+            <h3 className="text-xl font-light uppercase tracking-wide text-[#1F2937] mb-4">
+              Curated Experiences
+            </h3>
+            <p className="text-sm text-gray-600 mb-4">
+              Exclusive experiences available for this property
+            </p>
 
-        {/* Add Experiences CTA */}
-        <div className="bg-gradient-to-r from-[#1F2937] to-[#374151] rounded-lg p-6 text-center text-white">
-          <h3 className="text-xl font-light uppercase tracking-wide mb-2">Enhance Your Stay</h3>
-          <p className="text-gray-300 mb-4 font-light text-sm">
-            Browse exclusive experiences curated for your destination
-          </p>
-          <button
-            onClick={() => onNavigate('experiences')}
-            className="bg-[#1e3a5f] text-white px-6 py-3 rounded font-light uppercase text-sm tracking-wide hover:brightness-110 transition-all"
-          >
-            Browse Experiences
-          </button>
-        </div>
+            {/* Horizontal scrollable experience cards */}
+            <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory scrollbar-hide pb-4">
+              {experiences.map((experience, idx) => (
+                <div
+                  key={idx}
+                  className="flex-shrink-0 w-72 bg-white border border-gray-200 rounded-lg overflow-hidden snap-start hover:shadow-lg transition-shadow"
+                >
+                  {experience.image && (
+                    <div
+                      className="h-40 bg-cover bg-center"
+                      style={{ backgroundImage: `url(${experience.image})` }}
+                    ></div>
+                  )}
+                  <div className="p-4">
+                    <h4 className="text-base font-medium text-[#1F2937] mb-2">
+                      {experience.title}
+                    </h4>
+                    <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+                      {experience.description}
+                    </p>
+                    {experience.price && (
+                      <p className="text-sm font-medium text-[#D4AF37]">
+                        From ${experience.price}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <style>{`
+              .scrollbar-hide::-webkit-scrollbar { display: none; }
+              .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+            `}</style>
+          </div>
+        )}
+
+        {/* Placeholder when no experiences are available yet */}
+        {!isLoadingExperiences && experiences.length === 0 && (
+          <div className="bg-gradient-to-r from-[#1F2937] to-[#374151] rounded-lg p-6 text-center text-white mb-6">
+            <h3 className="text-xl font-light uppercase tracking-wide mb-2">Curated Experiences Coming Soon</h3>
+            <p className="text-gray-300 font-light text-sm">
+              Property-specific experiences will be available here once we link your booking to the property page
+            </p>
+          </div>
+        )}
       </div>
     </div>
   )

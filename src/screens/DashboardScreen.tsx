@@ -1,20 +1,53 @@
-import { useState, useEffect } from 'react'
-import { isGuestUser, isAuthenticated } from '../utils/auth'
+import { useState, useEffect, useRef } from 'react'
+import { isAuthenticated } from '../utils/auth'
 
 interface DashboardScreenProps {
   onNavigate: (screen: string) => void
   onLogout?: () => void
 }
 
+interface FeaturedOffer {
+  id: number
+  title: string
+  featuredImage: string
+  offerTitle: string
+  offerSubtitle: string
+  offerType: string
+  offerLink: string
+}
+
 const DashboardScreen: React.FC<DashboardScreenProps> = ({ onNavigate, onLogout }) => {
   const [currentSlide, setCurrentSlide] = useState(0)
   const [isLoaded, setIsLoaded] = useState(false)
-  const isGuest = isGuestUser()
+  const [featuredOffers, setFeaturedOffers] = useState<FeaturedOffer[]>([])
+  const [isLoadingOffers, setIsLoadingOffers] = useState(true)
+  const offersScrollRef = useRef<HTMLDivElement>(null)
+  // const isGuest = isGuestUser()
   const isLoggedIn = isAuthenticated()
 
   // Trigger entrance animations
   useEffect(() => {
     setIsLoaded(true)
+  }, [])
+
+  // Fetch featured offers from WordPress
+  useEffect(() => {
+    const fetchOffers = async () => {
+      try {
+        const response = await fetch('http://localhost:8080/api/featured-offers')
+        const data = await response.json()
+
+        if (data.success && data.offers) {
+          setFeaturedOffers(data.offers)
+        }
+      } catch (error) {
+        console.error('Error fetching featured offers:', error)
+      } finally {
+        setIsLoadingOffers(false)
+      }
+    }
+
+    fetchOffers()
   }, [])
 
   const experiences = [
@@ -58,6 +91,16 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({ onNavigate, onLogout 
 
   const goToNextSlide = () => {
     setCurrentSlide((prev) => (prev + 1) % experiences.length)
+  }
+
+  const scrollOffers = (direction: 'left' | 'right') => {
+    if (offersScrollRef.current) {
+      const scrollAmount = offersScrollRef.current.clientWidth * 0.75
+      offersScrollRef.current.scrollBy({
+        left: direction === 'left' ? -scrollAmount : scrollAmount,
+        behavior: 'smooth'
+      })
+    }
   }
 
   return (
@@ -249,40 +292,90 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({ onNavigate, onLogout 
           ) : (
             // Show My Reservations and Voyage Passport buttons when logged in
             <section className={`flex-shrink-0 px-4 pt-4 transition-all duration-1000 delay-200 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'}`}>
-              <div className="flex gap-3 mb-0">
+              <div className="flex flex-col gap-3 mb-0">
                 <button
                   onClick={() => onNavigate('reservations')}
-                  className="flex-1 bg-[#1e3a5f] p-4 rounded-xl hover:shadow-2xl transition-all duration-300 shadow-lg hover:scale-[1.02] active:scale-[0.98] hover:brightness-110 ripple overflow-hidden relative"
+                  className="group relative bg-white/90 backdrop-blur-md p-6 rounded-2xl hover:shadow-2xl transition-all duration-500 shadow-lg hover:scale-[1.02] active:scale-[0.98] border border-gray-200/50 overflow-hidden"
                 >
-                  <div className="flex flex-col items-center gap-2">
-                    <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 border-2 border-[#D4AF37]/50">
-                      <img
-                        src="https://www.cuvee.com/wp-content/uploads/2024/07/header-usa.webp"
-                        alt="Your Property"
-                        className="w-full h-full object-cover"
-                      />
+                  {/* Animated gradient background */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-[#1e3a5f]/5 via-[#2d4a6f]/10 to-[#1e3a5f]/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+
+                  {/* Decorative corner accent */}
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-[#1e3a5f]/10 to-transparent rounded-bl-full"></div>
+
+                  <div className="relative flex items-center gap-4">
+                    {/* Icon with animated ring */}
+                    <div className="relative flex-shrink-0">
+                      <div className="absolute inset-0 bg-[#1e3a5f]/10 rounded-2xl group-hover:scale-110 transition-transform duration-500"></div>
+                      <div className="relative w-14 h-14 bg-gradient-to-br from-[#1e3a5f] to-[#2d4a6f] rounded-2xl flex items-center justify-center shadow-lg p-3">
+                        <img
+                          src="https://cuvee.com/luxury/wp-content/uploads/elementor/thumbs/c-logo-rdu930jcvf7vua5hapz584ui91pyzmusork5jp7hlm.png"
+                          alt="Cuvée"
+                          className="w-full h-full object-contain brightness-0 invert"
+                        />
+                      </div>
                     </div>
-                    <div className="text-center">
-                      <div className="text-sm font-light uppercase tracking-wide text-[#D4AF37]">My Reservations</div>
-                      <div className="text-xs mt-1 text-gray-100">Stays & trips</div>
+
+                    {/* Text content */}
+                    <div className="flex-1 text-left">
+                      <div className="text-base font-semibold uppercase tracking-wide text-[#1e3a5f] mb-1 group-hover:text-[#2d4a6f] transition-colors">
+                        My Reservations
+                      </div>
+                      <div className="text-sm text-gray-600 font-light">
+                        View your upcoming stays & trips
+                      </div>
+                    </div>
+
+                    {/* Arrow indicator */}
+                    <div className="flex-shrink-0">
+                      <svg className="w-6 h-6 text-[#1e3a5f] group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
                     </div>
                   </div>
                 </button>
+
                 <button
                   onClick={() => onNavigate('passport')}
-                  className="flex-1 bg-gradient-to-br from-[#D4AF37] to-[#C0A062] p-4 rounded-xl hover:shadow-2xl transition-all duration-300 shadow-lg hover:scale-[1.02] active:scale-[0.98] hover:brightness-110 ripple overflow-hidden relative"
+                  className="group relative bg-gradient-to-br from-[#D4AF37] via-[#C0A062] to-[#D4AF37] p-6 rounded-2xl hover:shadow-2xl transition-all duration-500 shadow-lg hover:scale-[1.02] active:scale-[0.98] overflow-hidden"
                 >
-                  <div className="flex flex-col items-center gap-2">
-                    <div className="w-12 h-12 flex items-center justify-center">
-                      <img
-                        src="https://www.cuvee.com/wp-content/uploads/2025/10/sealll.png"
-                        alt="Voyage Passport"
-                        className="w-full h-full object-contain brightness-0 invert"
-                      />
+                  {/* Animated shimmer effect */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000"></div>
+
+                  {/* Decorative pattern */}
+                  <div className="absolute inset-0 opacity-10">
+                    <div className="absolute top-0 right-0 w-40 h-40 border-4 border-white rounded-full -mr-20 -mt-20"></div>
+                    <div className="absolute bottom-0 left-0 w-32 h-32 border-4 border-white rounded-full -ml-16 -mb-16"></div>
+                  </div>
+
+                  <div className="relative flex items-center gap-4">
+                    {/* Icon with glow effect */}
+                    <div className="relative flex-shrink-0">
+                      <div className="absolute inset-0 bg-white/30 rounded-2xl blur-md group-hover:blur-lg transition-all duration-500"></div>
+                      <div className="relative w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center shadow-lg border border-white/30 p-3">
+                        <img
+                          src="https://www.cuvee.com/wp-content/uploads/2025/10/sealll.png"
+                          alt="Voyage Passport"
+                          className="w-full h-full object-contain brightness-0 invert"
+                        />
+                      </div>
                     </div>
-                    <div className="text-center">
-                      <div className="text-sm font-light uppercase tracking-wide text-white">Voyage Passport</div>
-                      <div className="text-xs mt-1 text-white/90">Your rewards</div>
+
+                    {/* Text content */}
+                    <div className="flex-1 text-left">
+                      <div className="text-base font-semibold uppercase tracking-wide text-white mb-1 drop-shadow-md">
+                        Voyage Passport
+                      </div>
+                      <div className="text-sm text-white/95 font-light drop-shadow">
+                        Your rewards & exclusive benefits
+                      </div>
+                    </div>
+
+                    {/* Arrow indicator */}
+                    <div className="flex-shrink-0">
+                      <svg className="w-6 h-6 text-white group-hover:translate-x-1 transition-transform duration-300 drop-shadow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
                     </div>
                   </div>
                 </button>
@@ -290,113 +383,98 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({ onNavigate, onLogout 
             </section>
           )}
 
-          {/* Featured Destinations - Horizontal Slider */}
+          {/* Featured Offers - Responsive Layout */}
           <section className={`flex-shrink-0 px-4 pt-4 pb-2 transition-all duration-1000 delay-300 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'}`}>
-            <h2 className="text-sm font-light uppercase tracking-wide mb-3 text-gray-700">Featured Destinations</h2>
-            <div
-              className="flex gap-3 overflow-x-scroll snap-x snap-mandatory scrollbar-hide -mx-4 px-4"
-              style={{
-                scrollbarWidth: 'none',
-                msOverflowStyle: 'none',
-                WebkitOverflowScrolling: 'touch'
-              }}
-            >
-              <a
-                href="https://www.cuvee.com/destinations/aspen-snowmass/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block rounded-xl overflow-hidden shadow-md active:opacity-80 transition-opacity flex-shrink-0 snap-start"
-                style={{ minWidth: 'calc(70% - 6px)', height: '180px' }}
-              >
-                <div className="relative w-full h-full">
-                  <div
-                    className="absolute inset-0 bg-cover bg-center"
-                    style={{ backgroundImage: 'url(https://www.cuvee.com/wp-content/uploads/2024/07/header-usa.webp)' }}
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-sm font-light uppercase tracking-wide text-gray-700">Featured Offers</h2>
+              {featuredOffers.length >= 3 && (
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => scrollOffers('left')}
+                    className="w-8 h-8 rounded-full bg-white/80 backdrop-blur-sm shadow-md flex items-center justify-center hover:bg-white transition-colors border border-gray-200"
+                    aria-label="Previous offer"
                   >
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-black/20"></div>
-                    <div className="absolute bottom-0 left-0 right-0 p-3 bg-white/10 backdrop-blur-sm border-t border-white/20">
-                      <h3 className="text-xs font-light uppercase tracking-wide text-white">Aspen</h3>
-                    </div>
-                  </div>
-                </div>
-              </a>
-              <a
-                href="https://www.cuvee.com/destinations/hawaii/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block rounded-xl overflow-hidden shadow-md active:opacity-80 transition-opacity flex-shrink-0 snap-start"
-                style={{ minWidth: 'calc(70% - 6px)', height: '180px' }}
-              >
-                <div className="relative w-full h-full">
-                  <div
-                    className="absolute inset-0 bg-cover bg-center"
-                    style={{ backgroundImage: 'url(https://www.cuvee.com/wp-content/uploads/2024/07/Oahu-Break-Mobile.webp)' }}
+                    <svg className="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={() => scrollOffers('right')}
+                    className="w-8 h-8 rounded-full bg-white/80 backdrop-blur-sm shadow-md flex items-center justify-center hover:bg-white transition-colors border border-gray-200"
+                    aria-label="Next offer"
                   >
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-black/20"></div>
-                    <div className="absolute bottom-0 left-0 right-0 p-3 bg-white/10 backdrop-blur-sm border-t border-white/20">
-                      <h3 className="text-xs font-light uppercase tracking-wide text-white">Hawaii</h3>
-                    </div>
-                  </div>
+                    <svg className="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
                 </div>
-              </a>
-              <a
-                href="https://www.cuvee.com/destinations/napa-sonoma/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block rounded-xl overflow-hidden shadow-md active:opacity-80 transition-opacity flex-shrink-0 snap-start"
-                style={{ minWidth: 'calc(70% - 6px)', height: '180px' }}
-              >
-                <div className="relative w-full h-full">
-                  <div
-                    className="absolute inset-0 bg-cover bg-center"
-                    style={{ backgroundImage: 'url(https://www.cuvee.com/wp-content/uploads/2024/08/BBQ-Beach-Dinner-1-1-1-e1725011974523.webp)' }}
-                  >
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-black/20"></div>
-                    <div className="absolute bottom-0 left-0 right-0 p-3 bg-white/10 backdrop-blur-sm border-t border-white/20">
-                      <h3 className="text-xs font-light uppercase tracking-wide text-white">Napa</h3>
-                    </div>
-                  </div>
-                </div>
-              </a>
-              <a
-                href="https://www.cuvee.com/destinations/caribbean/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block rounded-xl overflow-hidden shadow-md active:opacity-80 transition-opacity flex-shrink-0 snap-start"
-                style={{ minWidth: 'calc(70% - 6px)', height: '180px' }}
-              >
-                <div className="relative w-full h-full">
-                  <div
-                    className="absolute inset-0 bg-cover bg-center"
-                    style={{ backgroundImage: 'url(https://www.cuvee.com/wp-content/uploads/2024/07/BBQ-Beach-Dinner-mob.webp)' }}
-                  >
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-black/20"></div>
-                    <div className="absolute bottom-0 left-0 right-0 p-3 bg-white/10 backdrop-blur-sm border-t border-white/20">
-                      <h3 className="text-xs font-light uppercase tracking-wide text-white">Caribbean</h3>
-                    </div>
-                  </div>
-                </div>
-              </a>
-              <a
-                href="https://www.cuvee.com/destinations/park-city/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block rounded-xl overflow-hidden shadow-md active:opacity-80 transition-opacity flex-shrink-0 snap-start"
-                style={{ minWidth: 'calc(70% - 6px)', height: '180px' }}
-              >
-                <div className="relative w-full h-full">
-                  <div
-                    className="absolute inset-0 bg-cover bg-center"
-                    style={{ backgroundImage: 'url(https://www.cuvee.com/wp-content/uploads/2024/08/exp-mud-tall.webp)' }}
-                  >
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-black/20"></div>
-                    <div className="absolute bottom-0 left-0 right-0 p-3 bg-white/10 backdrop-blur-sm border-t border-white/20">
-                      <h3 className="text-xs font-light uppercase tracking-wide text-white">Park City</h3>
-                    </div>
-                  </div>
-                </div>
-              </a>
+              )}
             </div>
+
+            {isLoadingOffers ? (
+              <div className="flex items-center justify-center h-[180px] bg-white/50 rounded-xl">
+                <div className="text-sm text-gray-500">Loading offers...</div>
+              </div>
+            ) : featuredOffers.length > 0 ? (
+              <div
+                ref={offersScrollRef}
+                className={`flex gap-3 ${featuredOffers.length >= 3 ? 'overflow-x-auto snap-x snap-mandatory scrollbar-hide -mx-4 px-4 cursor-grab active:cursor-grabbing' : ''}`}
+                style={featuredOffers.length >= 3 ? {
+                  scrollbarWidth: 'none',
+                  msOverflowStyle: 'none',
+                  WebkitOverflowScrolling: 'touch',
+                  scrollBehavior: 'smooth',
+                  touchAction: 'pan-x'
+                } : {}}
+              >
+                {featuredOffers.map((offer) => (
+                  <a
+                    key={offer.id}
+                    href={offer.offerLink || 'https://www.cuvee.com/offers'}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block rounded-xl overflow-hidden shadow-md active:opacity-80 transition-opacity flex-shrink-0 snap-start"
+                    style={
+                      featuredOffers.length === 1
+                        ? { width: '100%', height: '180px' }
+                        : featuredOffers.length === 2
+                        ? { width: 'calc(50% - 6px)', height: '180px' }
+                        : { minWidth: 'calc(70% - 6px)', height: '180px' }
+                    }
+                  >
+                    <div className="relative w-full h-full">
+                      <div
+                        className="absolute inset-0 bg-cover bg-center bg-gray-200"
+                        style={{
+                          backgroundImage: offer.featuredImage
+                            ? `url(${offer.featuredImage})`
+                            : 'url(https://www.cuvee.com/wp-content/uploads/2024/07/header-usa.webp)'
+                        }}
+                      >
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-black/30"></div>
+                        {offer.offerType && (
+                          <div className="absolute top-3 right-3 bg-[#D4AF37] text-white text-[10px] font-semibold uppercase tracking-wide px-2 py-1 rounded">
+                            {offer.offerType}
+                          </div>
+                        )}
+                        <div className="absolute bottom-0 left-0 right-0 p-4 bg-white/10 backdrop-blur-sm border-t border-white/20">
+                          <h3 className="text-sm font-semibold uppercase tracking-wide text-white mb-1">
+                            {offer.offerTitle}
+                          </h3>
+                          {offer.offerSubtitle && (
+                            <p className="text-[11px] text-white/90 font-light">{offer.offerSubtitle}</p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </a>
+                ))}
+              </div>
+            ) : (
+              <div className="flex items-center justify-center h-[180px] bg-white/50 rounded-xl">
+                <div className="text-sm text-gray-500">No featured offers available</div>
+              </div>
+            )}
             <style>{`
               .scrollbar-hide::-webkit-scrollbar { display: none; }
             `}</style>

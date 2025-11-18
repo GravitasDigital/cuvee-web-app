@@ -171,14 +171,14 @@ const VoyagePassportScreen: React.FC<VoyagePassportScreenProps> = ({ onBack }) =
       nextTier = tiers[0]
     }
 
-    // Calculate progress
+    // Calculate progress based on lifetime voyage points vs tier thresholds
     let progressPercentage = 0
     let pointsToNext = 0
 
     if (nextTier && currentTier) {
       const tierRange = nextTier.threshold - currentTier.threshold
       const progressInRange = lifetimePoints - currentTier.threshold
-      progressPercentage = Math.min((progressInRange / tierRange) * 100, 100)
+      progressPercentage = Math.floor(Math.min((progressInRange / tierRange) * 100, 100))
       pointsToNext = nextTier.threshold - lifetimePoints
     } else if (nextTier && !currentTier) {
       progressPercentage = 0
@@ -187,11 +187,12 @@ const VoyagePassportScreen: React.FC<VoyagePassportScreenProps> = ({ onBack }) =
 
     const isCircle = currentTier && currentTier.isLegacy
 
-    // Calculate Voyage Bucks earned this year
+    // Calculate Voyage Bucks earned - use lifetime points as annual spend for demo
+    const effectiveAnnualSpend = annualSpend > 0 ? annualSpend : lifetimePoints
     let voyageBucksEarned = 0
     let maxRedeemable = 0
-    if (currentTier && annualSpend > 0) {
-      voyageBucksEarned = Math.floor(annualSpend * (currentTier.earnBackPercent / 100))
+    if (currentTier) {
+      voyageBucksEarned = Math.floor(effectiveAnnualSpend * (currentTier.earnBackPercent / 100))
       maxRedeemable = currentTier.maxCreditPerStay
     }
 
@@ -199,11 +200,11 @@ const VoyagePassportScreen: React.FC<VoyagePassportScreenProps> = ({ onBack }) =
       currentTier,
       nextTier,
       lifetimePoints,
-      annualSpend,
+      annualSpend: effectiveAnnualSpend,
       voyageBucksEarned,
       maxRedeemable,
       isCircle,
-      progressPercentage: Math.round(progressPercentage),
+      progressPercentage,
       pointsToNext: Math.max(pointsToNext, 0)
     }
   }
@@ -221,22 +222,24 @@ const VoyagePassportScreen: React.FC<VoyagePassportScreenProps> = ({ onBack }) =
     ? getTierInfo(mockLifetimePoints, mockAnnualSpend)
     : getTierInfo(voyageData.voyage_points, voyageData.annual_spend)
 
-  const { currentTier, nextTier, lifetimePoints, annualSpend, voyageBucksEarned, maxRedeemable, isCircle, progressPercentage, pointsToNext } = tierInfo
+  const { currentTier, nextTier, lifetimePoints, annualSpend, voyageBucksEarned, isCircle, progressPercentage, pointsToNext } = tierInfo
 
   return (
-    <div className="min-h-screen bg-[#FCF8F2]">
+    <div className="h-screen bg-[rgb(243,244,246)] flex flex-col overflow-hidden">
       {/* Sticky Header */}
-      <div className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-200/50 shadow-sm">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <button
-            onClick={onBack}
-            className="flex items-center gap-2 hover:opacity-70 transition-opacity"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-            <span className="uppercase text-sm tracking-wide font-light">Return</span>
-          </button>
+      <div className="sticky top-0 z-50 flex-shrink-0 bg-white/95 backdrop-blur-md border-b border-gray-200/50 shadow-sm">
+        <div className="max-w-4xl mx-auto px-6 py-4">
+          <div className="relative flex items-center justify-center">
+            <button
+              onClick={onBack}
+              className="absolute left-0 hover:opacity-70 transition-opacity"
+            >
+              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <h1 className="text-3xl font-thin uppercase tracking-wide">Voyage Passport</h1>
+          </div>
         </div>
       </div>
 
@@ -271,61 +274,59 @@ const VoyagePassportScreen: React.FC<VoyagePassportScreenProps> = ({ onBack }) =
 
       {/* Main Content */}
       {!isLoadingData && !error && (
-        <div className="max-w-5xl mx-auto px-6 py-12">
+        <div className="flex-1 overflow-y-auto px-6 py-6">
+          <div className="max-w-4xl mx-auto">
           {/* Data Display Mode Indicator (for testing) */}
-          <div className="text-center mb-6">
-            <div className={`inline-block text-xs py-2 px-4 rounded-full ${useMockData ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'}`}>
+          <div className="text-center mb-3">
+            <div className={`inline-block text-xs py-1 px-3 rounded-full ${useMockData ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'}`}>
               {useMockData ? '📋 Demo Mode (No email found)' : '✓ Live Data from HubSpot'}
               {voyageData && ` • ${voyageData.name.first} ${voyageData.name.last}`}
             </div>
           </div>
 
           {/* Passport Header */}
-          <div className={`text-center mb-12 transition-all duration-700 ${isLoaded ? 'translate-y-0 opacity-100' : '-translate-y-4 opacity-0'}`}>
-            <div className="relative pt-32 pb-8">
-              <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-28 h-28">
+          <div className={`text-center mb-6 transition-all duration-700 ${isLoaded ? 'translate-y-0 opacity-100' : '-translate-y-4 opacity-0'}`}>
+            <div className="relative pt-20 pb-4">
+              <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-20 h-20">
                 <img
                   src="https://www.cuvee.com/wp-content/uploads/2025/10/sealll.png"
                   alt="Cuvée Seal"
                   className="w-full h-full object-contain opacity-95"
                 />
               </div>
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-light uppercase tracking-[0.1em] text-[#272B45] mb-4">
+              <h1 className="text-3xl md:text-4xl font-light uppercase tracking-[0.1em] text-[#272B45] mb-2">
                 The Cuvée Voyage
               </h1>
-              <p className="text-xl md:text-2xl font-semibold text-[#272B45] mb-4 max-w-3xl mx-auto">
+              <p className="text-base md:text-lg font-semibold text-[#272B45] max-w-3xl mx-auto px-6 py-4">
                 Your journey earns rewards. Every dollar spent builds your tier and earns Voyage Bucks toward your next stay.
-              </p>
-              <p className="text-base md:text-lg text-gray-600 max-w-3xl mx-auto">
-                Simply travel, earn points, and enjoy progressively better benefits with each stay.
               </p>
             </div>
           </div>
 
           {/* Current Tier Card */}
           {currentTier ? (
-            <div className={`bg-white rounded-xl shadow-xl p-8 md:p-12 mb-12 transition-all duration-700 delay-100 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`} style={{ borderLeft: `4px solid ${currentTier.color}` }}>
+            <div className={`bg-white rounded-xl shadow-xl p-6 mb-6 transition-all duration-700 delay-100 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`} style={{ borderLeft: `4px solid ${currentTier.color}` }}>
               {/* Tier Badge */}
-              <div className="text-center mb-8">
+              <div className="text-center mb-4">
                 {isCircle ? (
                   <div className="relative inline-block">
-                    <div className="w-48 h-48 mx-auto mb-6">
+                    <div className="w-32 h-32 mx-auto mb-3">
                       <img
                         src="https://www.cuvee.com/wp-content/uploads/2025/10/sealll.png"
                         alt="Circle Seal"
                         className="w-full h-full object-contain"
                       />
                     </div>
-                    <div className="text-center mt-56">
-                      <div className="text-xl font-bold uppercase tracking-wider text-[#272B45]">
+                    <div className="text-center">
+                      <div className="text-lg font-bold uppercase tracking-wider text-[#272B45]">
                         {currentTier.name}
                       </div>
-                      <div className="text-sm font-semibold text-gray-600 mt-1">Legacy Tier</div>
+                      <div className="text-xs font-semibold text-gray-600 mt-1">Legacy Tier</div>
                     </div>
                   </div>
                 ) : (
                   <div
-                    className="inline-block px-12 py-4 rounded-full text-xl font-bold uppercase tracking-widest shadow-lg"
+                    className="inline-block px-8 py-2 rounded-full text-lg font-bold uppercase tracking-widest shadow-lg"
                     style={{
                       backgroundColor: currentTier.color,
                       color: currentTier.name === 'Weekender' ? '#272B45' : '#fff'
@@ -337,57 +338,57 @@ const VoyagePassportScreen: React.FC<VoyagePassportScreenProps> = ({ onBack }) =
               </div>
 
               {/* Dual Status Display */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-0.5 bg-gray-300 rounded-xl overflow-hidden shadow-lg mb-8">
-                <div className="bg-white p-8 text-center relative">
-                  <div className="absolute top-5 left-1/2 transform -translate-x-1/2 w-10 h-10 opacity-[0.08]">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-0.5 bg-gray-300 rounded-xl overflow-hidden shadow-lg mb-4">
+                <div className="bg-white p-5 text-center relative">
+                  <div className="absolute top-4 left-1/2 transform -translate-x-1/2 w-8 h-8 opacity-[0.08]">
                     <img src="https://www.cuvee.com/wp-content/uploads/2025/10/sealll.png" alt="" className="w-full h-full" />
                   </div>
-                  <div className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-3 relative z-10">
+                  <div className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-2 relative z-10">
                     Voyage Bucks Earned
                   </div>
-                  <div className="text-4xl md:text-5xl font-bold text-gray-800 mb-2 relative z-10">
+                  <div className="text-3xl md:text-4xl font-bold text-gray-800 mb-1 relative z-10">
                     ${formatNumber(voyageBucksEarned)}
                   </div>
-                  <div className="text-sm text-gray-600 mb-3 relative z-10">
+                  <div className="text-xs text-gray-600 mb-2 relative z-10">
                     Available for Your Next Trip
                   </div>
                   {annualSpend > 0 ? (
-                    <div className="inline-block bg-gray-800 text-white px-5 py-2 rounded-full text-sm font-bold shadow relative z-10">
+                    <div className="inline-block bg-gray-800 text-white px-4 py-1.5 rounded-full text-xs font-bold shadow relative z-10">
                       From ${formatNumber(annualSpend)} spent this year ({currentTier.earnBackPercent}%)
                     </div>
                   ) : (
                     <div className="text-xs text-gray-400 italic relative z-10">Start traveling to earn</div>
                   )}
                 </div>
-                <div className="bg-white p-8 text-center relative">
-                  <div className="absolute top-5 left-1/2 transform -translate-x-1/2 w-10 h-10 opacity-[0.08]">
+                <div className="bg-white p-5 text-center relative">
+                  <div className="absolute top-4 left-1/2 transform -translate-x-1/2 w-8 h-8 opacity-[0.08]">
                     <img src="https://www.cuvee.com/wp-content/uploads/2025/10/sealll.png" alt="" className="w-full h-full" />
                   </div>
-                  <div className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-3 relative z-10">
+                  <div className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-2 relative z-10">
                     Lifetime Voyage Points
                   </div>
-                  <div className="text-4xl md:text-5xl font-bold text-gray-800 mb-2 relative z-10">
+                  <div className="text-3xl md:text-4xl font-bold text-gray-800 mb-1 relative z-10">
                     {formatNumber(lifetimePoints)}
                   </div>
-                  <div className="text-sm text-gray-600 relative z-10">
+                  <div className="text-xs text-gray-600 relative z-10">
                     Determines Your Tier
                   </div>
                 </div>
               </div>
 
               {/* Tier Benefits */}
-              <div className="bg-gray-50 border-2 border-gray-200 rounded-lg p-6 mb-6" style={{ borderLeft: `4px solid ${currentTier.color}` }}>
-                <div className="text-sm font-bold uppercase tracking-wide text-center text-gray-800 mb-6">
+              <div className="bg-gray-50 border-2 border-gray-200 rounded-lg p-4 mb-4" style={{ borderLeft: `4px solid ${currentTier.color}` }}>
+                <div className="text-xs font-bold uppercase tracking-wide text-center text-gray-800 mb-3">
                   Your Tier Benefits
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <div className="text-sm font-semibold text-gray-800 mb-2">Signature Experience:</div>
-                    <div className="text-sm text-gray-700 leading-relaxed">{currentTier.signatureBenefit}</div>
+                    <div className="text-xs font-semibold text-gray-800 mb-1">Signature Experience:</div>
+                    <div className="text-xs text-gray-700 leading-relaxed">{currentTier.signatureBenefit}</div>
                   </div>
                   <div>
-                    <div className="text-sm font-semibold text-gray-800 mb-2">Voyage Bucks:</div>
-                    <div className="text-sm text-gray-700 leading-relaxed">
+                    <div className="text-xs font-semibold text-gray-800 mb-1">Voyage Bucks:</div>
+                    <div className="text-xs text-gray-700 leading-relaxed">
                       Earn {currentTier.earnBackPercent}% back on each stay (up to ${formatNumber(currentTier.maxCreditPerStay)})
                     </div>
                   </div>
@@ -396,14 +397,14 @@ const VoyagePassportScreen: React.FC<VoyagePassportScreenProps> = ({ onBack }) =
 
               {/* Circle Benefits */}
               {isCircle && currentTier.circleAccess && (
-                <div className="bg-white border-2 border-gray-200 rounded-lg p-6 mb-6" style={{ borderLeft: `4px solid ${currentTier.color}` }}>
-                  <div className="text-sm font-bold uppercase tracking-wide text-gray-600 mb-4">
+                <div className="bg-white border-2 border-gray-200 rounded-lg p-4 mb-4" style={{ borderLeft: `4px solid ${currentTier.color}` }}>
+                  <div className="text-xs font-bold uppercase tracking-wide text-gray-600 mb-2">
                     Circle Benefits Include:
                   </div>
-                  <ul className="space-y-2">
+                  <ul className="space-y-1">
                     {currentTier.circleAccess.map((item, index) => (
-                      <li key={index} className="flex items-start gap-3 text-sm text-gray-700">
-                        <span className="text-gray-600 text-lg flex-shrink-0">•</span>
+                      <li key={index} className="flex items-start gap-2 text-xs text-gray-700">
+                        <span className="text-gray-600 flex-shrink-0">•</span>
                         <span className="leading-relaxed">{item}</span>
                       </li>
                     ))}
@@ -413,7 +414,7 @@ const VoyagePassportScreen: React.FC<VoyagePassportScreenProps> = ({ onBack }) =
 
               {/* Progress Bar */}
               {!isCircle && nextTier && (
-                <div className="mt-8 pt-8 border-t-2 border-gray-200">
+                <div className="mt-4 pt-4 border-t-2 border-gray-200">
                   <div className="text-base font-bold uppercase tracking-wide text-gray-800 text-center mb-4">
                     Progress to {nextTier.name}
                   </div>
@@ -473,52 +474,52 @@ const VoyagePassportScreen: React.FC<VoyagePassportScreenProps> = ({ onBack }) =
           )}
 
           {/* Voyage Tier Progress - Collapsible */}
-          <div className={`transition-all duration-700 delay-200 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'} mb-12`}>
+          <div className={`transition-all duration-700 delay-200 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'} mb-4`}>
             <details
               open={tiersExpanded}
               onToggle={(e) => setTiersExpanded((e.target as HTMLDetailsElement).open)}
-              className="bg-white rounded-lg shadow-md border-2 border-gray-200 p-6"
+              className="bg-white rounded-lg shadow-md border-2 border-gray-200 p-4"
               style={{ borderLeft: `4px solid ${currentTier?.color || '#666'}` }}
             >
-              <summary className="font-semibold text-lg uppercase tracking-wide text-center text-gray-800 cursor-pointer list-none">
+              <summary className="font-semibold text-sm uppercase tracking-wide text-center text-gray-800 cursor-pointer list-none">
                 Voyage Tier Progress
                 <span className={`ml-2 inline-block transition-transform duration-300 ${tiersExpanded ? 'rotate-180' : ''}`}>
                   ▼
                 </span>
               </summary>
-              <div className="mt-6 pt-6 border-t-2 border-gray-200">
-                <div className="relative pl-16 max-w-3xl mx-auto">
+              <div className="mt-3 pt-3 border-t-2 border-gray-200">
+                <div className="relative pl-12 max-w-3xl mx-auto">
                   {/* Timeline line */}
-                  <div className="absolute left-5 top-8 bottom-8 w-1 bg-gray-300 opacity-50"></div>
+                  <div className="absolute left-4 top-6 bottom-6 w-0.5 bg-gray-300 opacity-50"></div>
 
                   {/* Tier cards */}
-                  <div className="space-y-4">
+                  <div className="space-y-3">
                     {tiers.map((tier, index) => {
                       const isCurrent = currentTier && tier.name === currentTier.name
                       const currentIndex = currentTier ? tiers.findIndex(t => t.name === currentTier.name) : -1
                       const isPast = currentIndex >= 0 && index < currentIndex
-                      const isFuture = !isCurrent && !isPast
+                      // const isFuture = !isCurrent && !isPast
 
                       return (
                         <div
                           key={tier.name}
-                          className={`relative bg-white border-3 rounded-xl p-5 transition-all ${
+                          className={`relative bg-white border-3 rounded-xl p-3 transition-all ${
                             isCurrent ? 'shadow-xl' : ''
                           } ${isPast ? 'opacity-60' : ''}`}
                           style={{
                             borderColor: tier.name === 'Weekender' ? '#ccc' : tier.color,
-                            borderWidth: isCurrent ? '4px' : '3px',
-                            borderLeft: `4px solid ${tier.name === 'Weekender' ? '#ccc' : tier.color}`
+                            borderWidth: isCurrent ? '3px' : '2px',
+                            borderLeft: `3px solid ${tier.name === 'Weekender' ? '#ccc' : tier.color}`
                           }}
                         >
                           {/* Timeline dot */}
                           <div
                             className={`absolute transform -translate-y-1/2 rounded-full transition-all ${
                               isCurrent
-                                ? 'w-6 h-6 -left-[49px] top-1/2'
+                                ? 'w-5 h-5 -left-[37px] top-1/2'
                                 : isPast
-                                ? 'w-4 h-4 -left-[43px] top-1/2'
-                                : 'w-5 h-5 -left-[46px] top-1/2'
+                                ? 'w-3 h-3 -left-[32px] top-1/2'
+                                : 'w-4 h-4 -left-[34px] top-1/2'
                             }`}
                             style={{
                               backgroundColor: isPast ? '#999' : isCurrent ? '#666' : '#fff',
@@ -602,43 +603,44 @@ const VoyagePassportScreen: React.FC<VoyagePassportScreenProps> = ({ onBack }) =
           </div>
 
           {/* How It Works - Collapsible */}
-          <div className={`transition-all duration-700 delay-300 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
+          <div className={`transition-all duration-700 delay-300 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'} mb-4`}>
             <details
               open={howItWorksExpanded}
               onToggle={(e) => setHowItWorksExpanded((e.target as HTMLDetailsElement).open)}
-              className="bg-white rounded-lg shadow-md border-2 border-gray-200 p-6"
+              className="bg-white rounded-lg shadow-md border-2 border-gray-200 p-4"
               style={{ borderLeft: `4px solid ${currentTier?.color || '#666'}` }}
             >
-              <summary className="font-semibold text-lg uppercase tracking-wide text-center text-gray-800 cursor-pointer list-none">
+              <summary className="font-semibold text-sm uppercase tracking-wide text-center text-gray-800 cursor-pointer list-none">
                 How It Works
                 <span className={`ml-2 inline-block transition-transform duration-300 ${howItWorksExpanded ? 'rotate-180' : ''}`}>
                   ▼
                 </span>
               </summary>
-              <div className="mt-6 pt-6 border-t-2 border-gray-200">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                  <div className="bg-gray-50 rounded p-4">
-                    <div className="text-base font-bold text-gray-800 mb-2">Voyage Points (Lifetime)</div>
-                    <p className="text-sm text-gray-700 leading-relaxed">
+              <div className="mt-3 pt-3 border-t-2 border-gray-200">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                  <div className="bg-gray-50 rounded p-3">
+                    <div className="text-sm font-bold text-gray-800 mb-1">Voyage Points (Lifetime)</div>
+                    <p className="text-xs text-gray-700 leading-relaxed">
                       <strong>$1 = 1 Point</strong><br />
                       Determines tier • Never expires
                     </p>
                   </div>
-                  <div className="bg-gray-50 rounded p-4">
-                    <div className="text-base font-bold text-gray-800 mb-2">Voyage Bucks (Annual)</div>
-                    <p className="text-sm text-gray-700 leading-relaxed">
+                  <div className="bg-gray-50 rounded p-3">
+                    <div className="text-sm font-bold text-gray-800 mb-1">Voyage Bucks (Annual)</div>
+                    <p className="text-xs text-gray-700 leading-relaxed">
                       Earn <strong>1–5% back</strong> based on tier<br />
                       Redeemable on next stay • <strong>Expires in 12 months</strong>
                     </p>
                   </div>
                 </div>
-                <div className="bg-gray-50 rounded p-3.5">
-                  <p className="text-sm text-gray-600 leading-relaxed">
+                <div className="bg-gray-50 rounded p-3">
+                  <p className="text-xs text-gray-600 leading-relaxed">
                     <strong className="text-gray-800">Maintain Your Tier:</strong> Complete 1 stay every 12 months. If not, you move down one tier (Voyage Points remain).
                   </p>
                 </div>
               </div>
             </details>
+          </div>
           </div>
         </div>
       )}

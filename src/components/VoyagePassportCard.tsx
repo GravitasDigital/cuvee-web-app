@@ -213,7 +213,7 @@ const VoyagePassportCard: React.FC<VoyagePassportCardProps> = ({ className = '',
               }}
             ></div>
             <span className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 text-xs font-bold text-gray-800">
-              {progress_percentage}%
+              {Math.floor(progress_percentage)}%
             </span>
           </div>
           <div className="text-xs text-center text-gray-600">

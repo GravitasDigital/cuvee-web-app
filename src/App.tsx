@@ -99,7 +99,7 @@ function App() {
           }}
         />
       case 'itinerary':
-        return <ItineraryScreen onBack={() => setCurrentScreen('dashboard')} />
+        return <ItineraryScreen onBack={() => setCurrentScreen('reservation')} />
       case 'passport':
         return <VoyagePassportScreen onBack={() => setCurrentScreen('dashboard')} />
       default:
