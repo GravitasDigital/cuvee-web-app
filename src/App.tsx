@@ -7,10 +7,11 @@ import ExperiencesScreen from './screens/ExperiencesScreen'
 import PreferenceCenter from './components/PreferenceCenter'
 import ItineraryScreen from './screens/ItineraryScreen'
 import VoyagePassportScreen from './screens/VoyagePassportScreen'
+import FeaturedOffersScreen from './screens/FeaturedOffersScreen'
 import { isAuthenticated, setAuthToken, clearAuthToken } from './utils/auth'
 import './App.css'
 
-type Screen = 'dashboard' | 'login' | 'reservations' | 'reservation' | 'experiences' | 'preferences' | 'itinerary' | 'passport'
+type Screen = 'dashboard' | 'login' | 'reservations' | 'reservation' | 'experiences' | 'preferences' | 'itinerary' | 'passport' | 'offers'
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
@@ -102,6 +103,8 @@ function App() {
         return <ItineraryScreen onBack={() => setCurrentScreen('reservation')} />
       case 'passport':
         return <VoyagePassportScreen onBack={() => setCurrentScreen('dashboard')} />
+      case 'offers':
+        return <FeaturedOffersScreen onBack={() => setCurrentScreen('dashboard')} />
       default:
         return <DashboardScreen onNavigate={(screen: string) => handleNavigation(screen as Screen)} onLogout={handleLogout} />
     }

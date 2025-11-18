@@ -34,7 +34,10 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({ onNavigate, onLogout 
   useEffect(() => {
     const fetchOffers = async () => {
       try {
-        const response = await fetch('http://localhost:8080/api/featured-offers')
+        const apiUrl = import.meta.env.MODE === 'development'
+          ? 'http://localhost:8080/api/featured-offers'
+          : '/api/featured-offers'
+        const response = await fetch(apiUrl)
         const data = await response.json()
 
         if (data.success && data.offers) {
